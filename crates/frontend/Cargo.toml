@@ -9,7 +9,6 @@ tauri = { version = "2", features = [] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# async + network + data
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.11.22", features = ["json", "blocking", "cookies"] }
 chrono = "0.4"
@@ -21,11 +20,9 @@ qrcode = "0.14.1"
 image = "0.25"
 futures-util = "0.3"
 
-# logging
 log = "0.4"
 env_logger = "0.9"
 
-# internal crates
 common = { path = "../common" }
 backend = { path = "../backend" }
 

@@ -20,6 +20,4 @@ config
 /models/
 /效果/
 permissions
-/frontend/Log
 models
-/frontend/gen

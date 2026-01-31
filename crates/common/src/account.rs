@@ -20,8 +20,6 @@ pub struct Account {
     pub is_active: bool,            //该账号是否启动抢票
     pub avatar_url: Option<String>, //头像地址
     #[serde(skip)]
-    pub avatar_texture: Option<eframe::egui::TextureHandle>, //头像地址
-    #[serde(skip)]
     pub cookie_manager: Option<Arc<CookieManager>>, //cookie管理器
 }
 impl std::fmt::Debug for Account {
@@ -37,7 +35,6 @@ impl std::fmt::Debug for Account {
             .field("vip_label", &self.vip_label)
             .field("is_active", &self.is_active)
             .field("avatar_url", &self.avatar_url)
-            .field("avatar_texture", &"SKipped")
             .field("client", &self.cookie_manager)
             .finish()
     }
@@ -84,7 +81,6 @@ pub fn add_account(cookie: &str, client: &Client, ua: &str) -> Result<Account, S
             vip_label: data["vip_label"]["text"].as_str().unwrap_or("").to_string(),
             is_active: true,
             avatar_url: Some(data["face"].as_str().unwrap_or("").to_string()),
-            avatar_texture: None,
             cookie_manager: Some(cookie_manager),
         };
         account.ensure_client();
