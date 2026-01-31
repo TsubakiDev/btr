@@ -8,10 +8,106 @@ let monitorStats = {
   failures: 0,
 };
 
+function showNotification(message, type = "info", duration = 5000) {
+  const container = document.getElementById("notification-container");
+  if (!container) return;
+
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+
+  const content = document.createElement("div");
+  content.className = "notification-content";
+  content.textContent = message;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "notification-close";
+  closeBtn.innerHTML = "&times;";
+  closeBtn.onclick = () => {
+    notification.classList.add("hiding");
+    setTimeout(() => notification.remove(), 300);
+  };
+
+  notification.appendChild(content);
+  notification.appendChild(closeBtn);
+  container.appendChild(notification);
+
+  if (duration > 0) {
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.classList.add("hiding");
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, duration);
+  }
+
+  return notification;
+}
+
+function showAlert(message, type = "info") {
+  showNotification(message, type, 5000);
+}
+
+function showSuccess(message) {
+  showNotification(message, "success", 3000);
+}
+
+function showError(message) {
+  showNotification(message, "error", 7000);
+}
+
+function showWarning(message) {
+  showNotification(message, "warning", 5000);
+}
+
+function initializeEventListeners() {
+  document.querySelectorAll(".nav-tab").forEach((tab) => {
+    const tabName = tab.getAttribute("data-tab");
+    if (tabName) {
+      tab.addEventListener("click", (e) => {
+        e.preventDefault();
+        switchTab(tabName);
+        return false;
+      });
+    }
+  });
+
+  const buttonIds = {
+    "add-account-btn": showAddAccountModal,
+    "reload-accounts-btn": reloadAccounts,
+    "qrcode-login-btn": showQrcodeLoginModal,
+
+    "start-grab-btn": startGrab,
+    "stop-grab-btn": stopGrab,
+    "refresh-monitor-btn": refreshMonitor,
+
+    "load-logs-btn": loadLogs,
+    "clear-logs-btn": clearLogs,
+    "export-logs-btn": exportLogs,
+  };
+
+  Object.keys(buttonIds).forEach((id) => {
+    const element = document.getElementById(id);
+    const handler = buttonIds[id];
+    if (element && handler) {
+      element.addEventListener("click", (e) => {
+        e.preventDefault();
+        handler();
+      });
+    }
+  });
+
+  document.querySelectorAll("form").forEach((form) => {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM loaded, initializing application...");
 
   initializeTabSwitching();
+  initializeEventListeners();
 
   let attempts = 0;
   const maxAttempts = 20;
@@ -135,7 +231,6 @@ function closeAddProjectModal() {
   const modal = document.getElementById("add-project-modal");
   modal.classList.remove("active");
 
-  // 清空表单
   document.getElementById("project-id").value = "";
   document.getElementById("project-name").value = "";
   document.getElementById("project-url").value = "";
@@ -184,7 +279,7 @@ async function refreshQrcode() {
     }
   } catch (error) {
     console.error("刷新二维码失败:", error);
-    alert("生成二维码失败: " + error.message);
+    showError("生成二维码失败: " + error.message);
   }
 }
 
@@ -208,13 +303,13 @@ function startQrcodePolling(qrcodeKey) {
         if (result.cookie) {
           try {
             await invoke("add_account_by_cookie", { cookie: result.cookie });
-            alert("登录成功！账号已添加");
+            showSuccess("登录成功！账号已添加");
           } catch (error) {
             console.error("添加账号失败:", error);
-            alert("登录成功但添加账号失败: " + error);
+            showError("登录成功但添加账号失败: " + error);
           }
         } else {
-          alert("登录成功！");
+          showSuccess("登录成功！");
         }
 
         closeQrcodeModal();
@@ -222,11 +317,11 @@ function startQrcodePolling(qrcodeKey) {
       } else if (result.status === "expired") {
         clearInterval(qrcodePollingInterval);
         qrcodePollingInterval = null;
-        alert("二维码已过期，请刷新二维码");
+        showWarning("二维码已过期，请刷新二维码");
       } else if (result.status === "error") {
         clearInterval(qrcodePollingInterval);
         qrcodePollingInterval = null;
-        alert("登录失败: " + result.message);
+        showError("登录失败: " + result.message);
       }
     } catch (error) {
       console.error("轮询二维码状态失败:", error);
@@ -241,7 +336,7 @@ function showAddProjectModal() {
 async function submitAddAccount() {
   const cookie = document.getElementById("account-cookie").value;
   if (!cookie) {
-    alert("请输入Cookie");
+    showWarning("请输入Cookie");
     return;
   }
 
@@ -250,11 +345,11 @@ async function submitAddAccount() {
       throw new Error("Tauri invoke function not available");
     }
     await invoke("add_account_by_cookie", { cookie });
-    alert("添加成功！");
+    showSuccess("添加成功！");
     closeAddAccountModal();
     await reloadAccounts();
   } catch (error) {
-    alert("添加失败: " + error);
+    showError("添加失败: " + error);
   }
 }
 
@@ -264,7 +359,7 @@ async function submitAddProject() {
   const projectUrl = document.getElementById("project-url").value;
 
   if (!projectId || !projectName || !projectUrl) {
-    alert("请填写所有字段");
+    showWarning("请填写所有字段");
     return;
   }
 
@@ -274,7 +369,7 @@ async function submitAddProject() {
     }
 
     if (!/^\d+$/.test(projectId)) {
-      alert("项目ID必须为数字");
+      showWarning("项目ID必须为数字");
       return;
     }
 
@@ -282,7 +377,7 @@ async function submitAddProject() {
       !projectUrl.startsWith("http://") &&
       !projectUrl.startsWith("https://")
     ) {
-      alert("请输入有效的URL（以http://或https://开头）");
+      showWarning("请输入有效的URL（以http://或https://开头）");
       return;
     }
 
@@ -292,11 +387,11 @@ async function submitAddProject() {
       url: projectUrl,
     });
 
-    alert("添加项目成功！");
+    showSuccess("添加项目成功！");
     closeAddProjectModal();
     await loadProjects();
   } catch (error) {
-    alert("添加失败: " + error);
+    showError("添加失败: " + error);
   }
 }
 
@@ -356,7 +451,7 @@ async function toggleAccountActive(uid, active) {
     }
     await invoke("set_account_active", { uid, active });
   } catch (error) {
-    alert("更新账号状态失败: " + error);
+    showError("更新账号状态失败: " + error);
     await reloadAccounts();
   }
 }
@@ -377,7 +472,7 @@ async function deleteAccount(uid) {
     await invoke("delete_account_by_uid", { uid });
     await loadAccounts();
   } catch (error) {
-    alert("删除失败: " + error);
+    showError("删除失败: " + error);
   }
 }
 
@@ -446,7 +541,7 @@ async function selectProject(projectId) {
     const activeAccount = accounts.find((a) => a.is_active);
 
     if (!activeAccount) {
-      alert("请先激活一个账号");
+      showWarning("请先激活一个账号");
       return;
     }
 
@@ -463,7 +558,7 @@ async function selectProject(projectId) {
 
     showScreenTicketSelector(ticketInfo);
   } catch (error) {
-    alert("选择项目失败: " + error);
+    showError("选择项目失败: " + error);
     closeScreenTicketModal();
   }
 }
@@ -505,7 +600,6 @@ function showScreenTicketModal() {
   loading.style.display = "block";
   selector.style.display = "none";
 
-  // 重置购票人类型为默认值（实名购票人）
   document.getElementById("buyer-type-select").value = "1";
   onBuyerTypeChange();
 }
@@ -517,25 +611,20 @@ function closeScreenTicketModal() {
 
   modal.classList.remove("active");
 
-  // 重置加载状态
   loading.style.display = "block";
 
-  // 重置选择器状态
   selector.style.display = "none";
   document.getElementById("screen-select").innerHTML = "";
   document.getElementById("ticket-select").innerHTML = "";
 
-  // 重置购票人状态
   document.getElementById("buyer-list").innerHTML = "";
   document.getElementById("buyer-list").style.display = "none";
   document.getElementById("buyer-loading").style.display = "none";
   document.getElementById("buyer-error").style.display = "none";
 
-  // 重置非实名购票人表单
   document.getElementById("no-bind-name").value = "";
   document.getElementById("no-bind-tel").value = "";
 
-  // 重置购票人类型为默认值
   document.getElementById("buyer-type-select").value = "1";
   onBuyerTypeChange();
 }
@@ -554,7 +643,7 @@ async function showScreenTicketSelector(ticketInfo) {
   );
 
   if (availableScreens.length === 0) {
-    alert("暂无可选场次");
+    showWarning("暂无可选场次");
     closeScreenTicketModal();
     return;
   }
@@ -607,44 +696,39 @@ async function confirmScreenTicketSelection() {
     const buyerType = document.getElementById("buyer-type-select").value;
 
     if (!screenId || !ticketId) {
-      alert("请选择场次和票种");
+      showWarning("请选择场次和票种");
       return;
     }
 
-    // 根据购票人类型处理
     if (buyerType === "1") {
-      // 实名购票人
       const selectedBuyers = getSelectedBuyers();
       console.log("选中的购票人数据:", JSON.stringify(selectedBuyers, null, 2));
       console.log("购票人数量:", selectedBuyers.length);
 
       if (selectedBuyers.length === 0) {
-        alert("请至少选择一个购票人");
+        showWarning("请至少选择一个购票人");
         return;
       }
     } else if (buyerType === "0") {
-      // 非实名购票人
       const name = document.getElementById("no-bind-name").value.trim();
       const tel = document.getElementById("no-bind-tel").value.trim();
 
       if (!name || !tel) {
-        alert("请填写非实名购票人的姓名和手机号");
+        showWarning("请填写非实名购票人的姓名和手机号");
         return;
       }
 
       // 验证手机号格式
       const phoneRegex = /^1[3-9]\d{9}$/;
       if (!phoneRegex.test(tel)) {
-        alert("请输入有效的手机号");
+        showWarning("请输入有效的手机号");
         return;
       }
     } else {
-      alert("请选择购票人类型");
+      showWarning("请选择购票人类型");
       return;
     }
 
-    // 购票人验证逻辑已移到购票人类型处理部分
-    // 设置场次和票种
     await invoke("set_selected_screen", {
       index: null,
       id: parseInt(screenId),
@@ -653,11 +737,9 @@ async function confirmScreenTicketSelection() {
       id: parseInt(ticketId),
     });
 
-    // 设置购票人类型
     await invoke("set_buyer_type", { buyerType: parseInt(buyerType) });
 
     if (buyerType === "1") {
-      // 实名购票人
       const selectedBuyers = getSelectedBuyers();
       const validatedBuyers = selectedBuyers.map((buyer) => ({
         id: Number(buyer.id),
@@ -676,10 +758,8 @@ async function confirmScreenTicketSelection() {
         JSON.stringify(validatedBuyers, null, 2),
       );
 
-      // 设置实名购票人列表
       await invoke("set_selected_buyer_list", { buyerList: validatedBuyers });
 
-      // 清除非实名购票人信息
       await invoke("clear_no_bind_buyer_info");
 
       console.log(
@@ -691,16 +771,13 @@ async function confirmScreenTicketSelection() {
         validatedBuyers.length,
       );
     } else if (buyerType === "0") {
-      // 非实名购票人
       const name = document.getElementById("no-bind-name").value.trim();
       const tel = document.getElementById("no-bind-tel").value.trim();
 
       console.log("非实名购票人信息:", { name, tel });
 
-      // 设置非实名购票人信息
       await invoke("set_no_bind_buyer_info", { name, tel });
 
-      // 清空实名购票人列表
       await invoke("set_selected_buyer_list", { buyerList: null });
 
       console.log(
@@ -713,15 +790,14 @@ async function confirmScreenTicketSelection() {
       );
     }
 
-    alert("选择成功！");
+    showSuccess("设置成功");
     closeScreenTicketModal();
   } catch (error) {
     console.error("确认选择失败:", error);
-    alert("选择失败: " + error);
+    showError("设置失败: " + error);
   }
 }
 
-// 购票人类型切换函数
 function onBuyerTypeChange() {
   const buyerType = document.getElementById("buyer-type-select").value;
   const realNameSection = document.getElementById("real-name-buyer-section");
@@ -730,41 +806,36 @@ function onBuyerTypeChange() {
   );
 
   if (buyerType === "1") {
-    // 显示实名购票人部分
     realNameSection.style.display = "block";
     nonRealNameSection.style.display = "none";
   } else if (buyerType === "0") {
-    // 显示非实名购票人部分
     realNameSection.style.display = "none";
     nonRealNameSection.style.display = "block";
   }
 }
 
-// 保存非实名购票人信息
 async function saveNoBindBuyerInfo() {
   try {
     const name = document.getElementById("no-bind-name").value.trim();
     const tel = document.getElementById("no-bind-tel").value.trim();
 
     if (!name || !tel) {
-      alert("请填写姓名和手机号");
+      showError("请填写姓名和手机号");
       return;
     }
 
-    // 验证手机号格式
     const phoneRegex = /^1[3-9]\d{9}$/;
     if (!phoneRegex.test(tel)) {
-      alert("请输入有效的手机号");
+      showError("请输入有效的手机号");
       return;
     }
 
-    // 设置非实名购票人信息
     await invoke("set_no_bind_buyer_info", { name, tel });
 
-    alert("非实名购票人信息保存成功！");
+    showSuccess("非实名购票人信息保存成功！");
   } catch (error) {
     console.error("保存非实名购票人信息失败:", error);
-    alert("保存失败: " + error);
+    showError("保存失败: " + error);
   }
 }
 
@@ -917,10 +988,10 @@ async function deleteProject(projectId) {
     }
 
     await invoke("delete_project", { id: projectId });
-    alert("删除项目成功");
+    showSuccess("删除项目成功");
     await loadProjects();
   } catch (error) {
-    alert("删除失败: " + error);
+    showError("删除失败: " + error);
   }
 }
 
@@ -937,11 +1008,11 @@ async function startGrab() {
     document.getElementById("monitor-status").style.color =
       "var(--success-color)";
 
-    alert("开始抢票！任务ID: " + taskId);
+    showSuccess("开始抢票！任务ID: " + taskId);
     await refreshMonitor();
   } catch (error) {
     console.error("启动抢票失败:", error);
-    alert("启动失败: " + error);
+    showError("清空失败: " + error);
   }
 }
 
@@ -956,9 +1027,9 @@ async function stopGrab() {
     document.getElementById("monitor-status").style.color =
       "var(--error-color)";
 
-    alert("停止抢票");
+    showInfo("停止抢票");
   } catch (error) {
-    alert("停止失败: " + error);
+    showError("停止失败: " + error);
   }
 }
 
@@ -1107,27 +1178,27 @@ async function saveSettings() {
     const userAgent = document.getElementById("user-agent").value;
 
     if (delayTime < 1 || delayTime > 10) {
-      alert("延迟时间必须在1-10秒之间");
+      showError("延迟时间必须在1-10秒之间");
       return;
     }
 
     if (maxAttempts < 1 || maxAttempts > 1000) {
-      alert("最大尝试次数必须在1-1000之间");
+      showError("最大尝试次数必须在1-1000之间");
       return;
     }
 
     if (gotifyUrl && !gotifyUrl.startsWith("http")) {
-      alert("Gotify URL必须以http://或https://开头");
+      showError("Gotify URL必须以http://或https://开头");
       return;
     }
 
     if (smtpServer && !smtpPort) {
-      alert("请填写SMTP端口");
+      showError("请填写SMTP端口");
       return;
     }
 
     if (customUa && !userAgent.trim()) {
-      alert("启用自定义User-Agent时，必须填写User-Agent");
+      showError("启用自定义User-Agent时，必须填写User-Agent");
       return;
     }
 
@@ -1153,11 +1224,11 @@ async function saveSettings() {
       user_agent: userAgent,
     });
 
-    alert("设置保存成功");
+    showSuccess("设置保存成功");
 
     await loadSettings();
   } catch (error) {
-    alert("保存设置失败: " + error);
+    showError("开始抢票失败: " + error);
   }
 }
 
@@ -1182,7 +1253,7 @@ function resetSettings() {
     document.getElementById("smtp-to").value = "";
     document.getElementById("custom-ua").checked = false;
     document.getElementById("user-agent").value = "";
-    alert("设置已恢复默认");
+    showSuccess("设置已恢复默认");
   }
 }
 
@@ -1220,10 +1291,10 @@ async function clearLogs() {
     }
 
     await invoke("clear_logs");
-    alert("日志已清空");
+    showSuccess("日志已清空");
     await loadLogs();
   } catch (error) {
-    alert("清空日志失败: " + error);
+    showError("设置失败: " + error);
   }
 }
 
@@ -1244,7 +1315,7 @@ async function exportLogs() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   } catch (error) {
-    alert("导出日志失败: " + error);
+    showError("设置失败: " + error);
   }
 }
 
@@ -1404,7 +1475,7 @@ function switchTab(tabName) {
 
 async function testPush() {
   if (!invoke) {
-    alert("Tauri API不可用，无法测试推送");
+    showError("Tauri API不可用，无法测试推送");
     return;
   }
 
@@ -1414,9 +1485,9 @@ async function testPush() {
 
   try {
     const result = await invoke("push_test");
-    alert("测试推送已发送：" + result);
+    showSuccess("测试推送已发送：" + result);
   } catch (error) {
-    alert("测试推送失败: " + error);
+    showError("设置失败: " + error);
   }
 }
 

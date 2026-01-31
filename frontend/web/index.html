@@ -7,48 +7,20 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
+        <div id="notification-container"></div>
         <div id="sidebar">
             <div class="app-header">
                 <div class="app-title">BTR</div>
                 <div class="app-version">v6.6.2-indev</div>
             </div>
             <nav class="nav-tabs">
-                <a
-                    class="nav-tab active"
-                    data-tab="home"
-                    onclick="switchTab('home')"
-                    >首页</a
-                >
-                <a
-                    class="nav-tab"
-                    data-tab="accounts"
-                    onclick="switchTab('accounts')"
-                    >账号管理</a
-                >
-                <a
-                    class="nav-tab"
-                    data-tab="monitor"
-                    onclick="switchTab('monitor')"
-                    >监控</a
-                >
-                <a
-                    class="nav-tab"
-                    data-tab="projects"
-                    onclick="switchTab('projects')"
-                    >项目列表</a
-                >
-                <a
-                    class="nav-tab"
-                    data-tab="settings"
-                    onclick="switchTab('settings')"
-                    >设置</a
-                >
-                <a class="nav-tab" data-tab="logs" onclick="switchTab('logs')"
-                    >日志</a
-                >
-                <a class="nav-tab" data-tab="help" onclick="switchTab('help')"
-                    >帮助</a
-                >
+                <a class="nav-tab active" data-tab="home">首页</a>
+                <a class="nav-tab" data-tab="accounts">账号管理</a>
+                <a class="nav-tab" data-tab="monitor">监控</a>
+                <a class="nav-tab" data-tab="projects">项目列表</a>
+                <a class="nav-tab" data-tab="settings">设置</a>
+                <a class="nav-tab" data-tab="logs">日志</a>
+                <a class="nav-tab" data-tab="help">帮助</a>
             </nav>
         </div>
 
@@ -56,86 +28,37 @@
             <div id="tab-home" class="tab-content active">
                 <div class="card">
                     <h2 class="card-title">欢迎使用 BTR</h2>
-                    <p
-                        style="
-                            margin-bottom: 16px;
-                            color: var(--text-secondary);
-                        "
-                    >
+                    <p class="text-secondary mb-16">
                         Bilibili Ticket Rush - 哔哩哔哩会员购抢票工具
                     </p>
                 </div>
                 <div class="card">
                     <h3 class="card-title">快速开始</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 8px">
-                        1. 在"账号管理"中添加B站账号
-                    </p>
-                    <p style="color: var(--text-secondary); margin-bottom: 8px">
+                    <p class="quick-start-item">1. 在"账号管理"中添加B站账号</p>
+                    <p class="quick-start-item">
                         2. 在"项目列表"中选择要抢票的项目
                     </p>
-                    <p style="color: var(--text-secondary); margin-bottom: 8px">
-                        3. 在"设置"中配置抢票参数
-                    </p>
-                    <p style="color: var(--text-secondary)">
-                        4. 在"监控"页面开始抢票
-                    </p>
+                    <p class="quick-start-item">3. 在"设置"中配置抢票参数</p>
+                    <p class="quick-start-item">4. 在"监控"页面开始抢票</p>
                 </div>
                 <div class="card">
                     <h3 class="card-title">系统信息</h3>
-                    <div
-                        style="
-                            display: grid;
-                            grid-template-columns: repeat(2, 1fr);
-                            gap: 16px;
-                        "
-                    >
+                    <div class="stats-grid">
                         <div>
-                            <div
-                                style="
-                                    font-size: 12px;
-                                    color: var(--text-secondary);
-                                "
-                            >
-                                版本
-                            </div>
-                            <div style="font-weight: 500">v6.6.2-indev</div>
+                            <div class="stats-label">版本</div>
+                            <div class="stats-value">v6.6.2-indev</div>
                         </div>
                         <div>
-                            <div
-                                style="
-                                    font-size: 12px;
-                                    color: var(--text-secondary);
-                                "
-                            >
-                                运行时间
-                            </div>
-                            <div style="font-weight: 500" id="uptime">
-                                0 分钟
-                            </div>
+                            <div class="stats-label">运行时间</div>
+                            <div class="stats-value" id="uptime">0 分钟</div>
                         </div>
                         <div>
-                            <div
-                                style="
-                                    font-size: 12px;
-                                    color: var(--text-secondary);
-                                "
-                            >
-                                账号数量
-                            </div>
-                            <div style="font-weight: 500" id="account-count">
-                                0
-                            </div>
+                            <div class="stats-label">账号数量</div>
+                            <div class="stats-value" id="account-count">0</div>
                         </div>
                         <div>
-                            <div
-                                style="
-                                    font-size: 12px;
-                                    color: var(--text-secondary);
-                                "
-                            >
-                                日志数量
-                            </div>
-                            <div style="font-weight: 500" id="log-count">0</div>
+                            <div class="stats-label">日志数量</div>
+                            <div class="stats-value" id="log-count">0</div>
                         </div>
                     </div>
                 </div>
@@ -144,31 +67,27 @@
             <div id="tab-accounts" class="tab-content">
                 <div class="card">
                     <h2 class="card-title">账号管理</h2>
-                    <button
-                        class="btn btn-primary"
-                        onclick="showAddAccountModal()"
-                    >
-                        添加账号
-                    </button>
-                    <button class="btn btn-success" onclick="reloadAccounts()">
-                        刷新
-                    </button>
-                    <button
-                        class="btn btn-warning"
-                        onclick="showQrcodeLoginModal()"
-                    >
-                        扫码登录
-                    </button>
-                </div>
-                <div class="card">
+                    <div class="monitor-controls">
+                        <button class="btn btn-primary" id="add-account-btn">
+                            添加账号
+                        </button>
+                        <button
+                            class="btn btn-success"
+                            id="reload-accounts-btn"
+                        >
+                            刷新
+                        </button>
+                        <button class="btn btn-warning" id="qrcode-login-btn">
+                            扫码登录
+                        </button>
+                    </div>
                     <div id="accounts-loading" class="loading">
                         <div class="spinner"></div>
-                        <div>加载账号中...</div>
+                        <div>加载中...</div>
                     </div>
                     <ul
                         id="accounts-list"
-                        class="account-list"
-                        style="display: none"
+                        class="account-list display-none"
                     ></ul>
                 </div>
             </div>
@@ -177,16 +96,16 @@
                 <div class="card">
                     <h2 class="card-title">抢票监控</h2>
 
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px">
-                        <button class="btn btn-success" onclick="startGrab()">
+                    <div class="monitor-controls">
+                        <button class="btn btn-success" id="start-grab-btn">
                             开始抢票
                         </button>
-                        <button class="btn btn-danger" onclick="stopGrab()">
+                        <button class="btn btn-danger" id="stop-grab-btn">
                             停止抢票
                         </button>
                         <button
                             class="btn btn-primary"
-                            onclick="refreshMonitor()"
+                            id="refresh-monitor-btn"
                         >
                             刷新状态
                         </button>
@@ -210,9 +129,8 @@
                         <div class="monitor-card">
                             <div class="monitor-title">成功次数</div>
                             <div
-                                class="monitor-value"
+                                class="monitor-value color-success"
                                 id="monitor-success"
-                                style="color: var(--success-color)"
                             >
                                 0
                             </div>
@@ -221,9 +139,8 @@
                         <div class="monitor-card">
                             <div class="monitor-title">失败次数</div>
                             <div
-                                class="monitor-value"
+                                class="monitor-value color-error"
                                 id="monitor-failures"
-                                style="color: var(--error-color)"
                             >
                                 0
                             </div>
@@ -231,30 +148,10 @@
                         </div>
                     </div>
 
-                    <div
-                        style="
-                            text-align: center;
-                            margin-top: 16px;
-                            padding: 12px;
-                            background: rgba(0, 0, 0, 0.02);
-                            border-radius: 6px;
-                        "
-                    >
-                        <span
-                            style="
-                                color: var(--text-secondary);
-                                font-size: 14px;
-                            "
-                        >
-                            运行时间:
-                            <span
-                                id="uptime"
-                                style="
-                                    font-weight: 600;
-                                    color: var(--text-primary);
-                                "
-                                >0 分钟</span
-                            >
+                    <div class="monitor-status-box">
+                        <span class="status-label"> 当前状态： </span>
+                        <span class="stats-value" id="monitor-status">
+                            空闲
                         </span>
                     </div>
                 </div>
@@ -637,14 +534,14 @@
             <div id="tab-logs" class="tab-content">
                 <div class="card">
                     <h2 class="card-title">系统日志</h2>
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px">
-                        <button class="btn btn-primary" onclick="loadLogs()">
+                    <div class="monitor-controls">
+                        <button class="btn btn-primary" id="load-logs-btn">
                             刷新日志
                         </button>
-                        <button class="btn btn-danger" onclick="clearLogs()">
+                        <button class="btn btn-danger" id="clear-logs-btn">
                             清空日志
                         </button>
-                        <button class="btn btn-success" onclick="exportLogs()">
+                        <button class="btn btn-success" id="export-logs-btn">
                             导出日志
                         </button>
                     </div>
