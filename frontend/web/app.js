@@ -600,8 +600,13 @@ function showScreenTicketModal() {
   loading.style.display = "block";
   selector.style.display = "none";
 
-  document.getElementById("buyer-type-select").value = "1";
-  onBuyerTypeChange();
+  // 隐藏购票人类型选择框
+  const buyerTypeGroup = document.querySelector(
+    ".form-group:has(#buyer-type-select)",
+  );
+  if (buyerTypeGroup) {
+    buyerTypeGroup.style.display = "none";
+  }
 }
 
 function closeScreenTicketModal() {
@@ -625,8 +630,13 @@ function closeScreenTicketModal() {
   document.getElementById("no-bind-name").value = "";
   document.getElementById("no-bind-tel").value = "";
 
-  document.getElementById("buyer-type-select").value = "1";
-  onBuyerTypeChange();
+  // 显示购票人类型选择框（下次打开时重新隐藏）
+  const buyerTypeGroup = document.querySelector(
+    ".form-group:has(#buyer-type-select)",
+  );
+  if (buyerTypeGroup) {
+    buyerTypeGroup.style.display = "block";
+  }
 }
 
 async function showScreenTicketSelector(ticketInfo) {
@@ -663,6 +673,28 @@ async function showScreenTicketSelector(ticketInfo) {
 
   updateTicketList(availableScreens[0].id);
 
+  const idBind = ticketInfo.id_bind;
+  console.log("项目实名制类型 id_bind:", idBind);
+
+  const realNameSection = document.getElementById("real-name-buyer-section");
+  const nonRealNameSection = document.getElementById(
+    "non-real-name-buyer-section",
+  );
+
+  if (idBind === 0) {
+    realNameSection.style.display = "none";
+    nonRealNameSection.style.display = "block";
+    showNotification("当前项目为非强实名制，请填写姓名和手机号", "info", 5000);
+  } else if (idBind === 1 || idBind === 2) {
+    realNameSection.style.display = "block";
+    nonRealNameSection.style.display = "none";
+    showNotification("当前项目为强实名制，请从购票人列表中选择", "info", 5000);
+  } else {
+    realNameSection.style.display = "block";
+    nonRealNameSection.style.display = "none";
+    console.warn("未知的实名制类型 id_bind:", idBind);
+  }
+
   await loadBuyerInfo();
 }
 
@@ -693,10 +725,25 @@ async function confirmScreenTicketSelection() {
   try {
     const screenId = document.getElementById("screen-select").value;
     const ticketId = document.getElementById("ticket-select").value;
-    const buyerType = document.getElementById("buyer-type-select").value;
 
     if (!screenId || !ticketId) {
       showWarning("请选择场次和票种");
+      return;
+    }
+
+    // 根据当前显示的购票人部分确定购票人类型
+    const realNameSection = document.getElementById("real-name-buyer-section");
+    const nonRealNameSection = document.getElementById(
+      "non-real-name-buyer-section",
+    );
+
+    let buyerType = "";
+    if (realNameSection.style.display !== "none") {
+      buyerType = "1";
+    } else if (nonRealNameSection.style.display !== "none") {
+      buyerType = "0";
+    } else {
+      showWarning("无法确定购票人类型");
       return;
     }
 
@@ -724,9 +771,6 @@ async function confirmScreenTicketSelection() {
         showWarning("请输入有效的手机号");
         return;
       }
-    } else {
-      showWarning("请选择购票人类型");
-      return;
     }
 
     await invoke("set_selected_screen", {
@@ -799,19 +843,8 @@ async function confirmScreenTicketSelection() {
 }
 
 function onBuyerTypeChange() {
-  const buyerType = document.getElementById("buyer-type-select").value;
-  const realNameSection = document.getElementById("real-name-buyer-section");
-  const nonRealNameSection = document.getElementById(
-    "non-real-name-buyer-section",
-  );
-
-  if (buyerType === "1") {
-    realNameSection.style.display = "block";
-    nonRealNameSection.style.display = "none";
-  } else if (buyerType === "0") {
-    realNameSection.style.display = "none";
-    nonRealNameSection.style.display = "block";
-  }
+  // 此函数现在不再需要，因为购票人类型选择框已隐藏
+  // 保留函数定义以避免调用错误
 }
 
 async function saveNoBindBuyerInfo() {

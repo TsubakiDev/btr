@@ -761,13 +761,11 @@
                         <select id="ticket-select" class="form-input"></select>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">购票人类型</label>
-                        <select
-                            id="buyer-type-select"
-                            class="form-input"
-                            onchange="onBuyerTypeChange()"
+                    <div class="form-group" style="display: none">
+                        <label id="buyer-type-label" class="form-label"
+                            >购票人类型</label
                         >
+                        <select id="buyer-type-select" class="form-input">
                             <option value="1">实名购票人</option>
                             <option value="0">非实名购票人</option>
                         </select>
