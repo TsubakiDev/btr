@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use reqwest::header::HeaderValue;
-use reqwest::{header, Client};
+use reqwest::{Client, header};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

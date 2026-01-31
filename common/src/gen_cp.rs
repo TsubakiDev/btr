@@ -131,7 +131,7 @@ impl CTokenGenerator {
 
     pub fn generate_ctoken(&mut self, is_create_v2: bool) -> String {
         let mut rng = thread_rng();
-        
+
         self.touch_event = 255; // 触摸事件数: 手机端抓包数据
         self.isibility_change = 2; // 可见性变化数: 手机端抓包数据
         self.inner_width = 255; // 窗口内部宽度: 手机端抓包数据

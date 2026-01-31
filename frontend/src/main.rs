@@ -3,16 +3,17 @@
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use reqwest::{header, Client};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
+use rand::{Rng, distributions::Alphanumeric, thread_rng};
+use reqwest::{Client, header};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use tauri::State;
 
 use backend::taskmanager::TaskManagerImpl;
-use common::account::{add_account, Account};
+use common::PushType;
+use common::account::{Account, add_account};
 use common::captcha::LocalCaptcha;
 use common::login::LoginInput;
 use common::push::PushConfig;
@@ -22,8 +23,7 @@ use common::taskmanager::{
 };
 use common::ticket::{BilibiliTicket, TicketInfo};
 use common::utility::CustomConfig;
-use common::utils::{save_config, Config};
-use common::PushType;
+use common::utils::{Config, save_config};
 
 const APP_NAME: &str = "BTR";
 const APP_VERSION: &str = "6.6.2-indev";

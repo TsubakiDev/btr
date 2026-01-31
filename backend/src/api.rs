@@ -3,10 +3,10 @@ use common::gen_cp::CTokenGenerator;
 use common::http_utils::request_get;
 use common::login::QrCodeLoginStatus;
 use common::ticket::*;
-use rand::{thread_rng, Rng};
+use rand::{Rng, thread_rng};
 use reqwest::Client;
 use serde_json;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -322,10 +322,10 @@ pub async fn get_ticket_token(
                                 let mid = json["data"]["ga_data"]["riskParams"]["mid"]
                                     .as_str()
                                     .unwrap_or("");
-                                let decision_type = json["data"]["ga_data"]["riskParams"]
-                                    ["decision_type"]
-                                    .as_str()
-                                    .unwrap_or("");
+                                let decision_type =
+                                    json["data"]["ga_data"]["riskParams"]["decision_type"]
+                                        .as_str()
+                                        .unwrap_or("");
                                 let buvid = json["data"]["ga_data"]["riskParams"]["buvid"]
                                     .as_str()
                                     .unwrap_or("");
@@ -359,7 +359,11 @@ pub async fn get_ticket_token(
                                 return Err(token_risk_param);
                             }
                             _ => {
-                                log::error!("获取token失败，未知错误码：{}，错误信息：{}，请提issue修复此问题", code, msg);
+                                log::error!(
+                                    "获取token失败，未知错误码：{}，错误信息：{}，请提issue修复此问题",
+                                    code,
+                                    msg
+                                );
                                 log::error!("{:?}", json);
                                 return Err(TokenRiskParam {
                                     code: code as i32,
@@ -441,7 +445,10 @@ pub async fn confirm_ticket_order(
     project_id: &str,
     token: &str,
 ) -> Result<ConfirmTicketResult, String> {
-    let url = format!("https://show.bilibili.com/api/ticket/order/confirmInfo?token={}&voucher=&project_id={}&requestSource=neul-next",token,project_id);
+    let url = format!(
+        "https://show.bilibili.com/api/ticket/order/confirmInfo?token={}&voucher=&project_id={}&requestSource=neul-next",
+        token, project_id
+    );
     let response = cookie_manager
         .get(&url)
         .await
@@ -658,7 +665,10 @@ pub async fn check_fake_ticket(
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs() as u32;
-    let mut url = format!("https://show.bilibili.com/api/ticket/order/createstatus?project_id={}&token={}&timestamp={}",project_id, pay_token, timestamp);
+    let mut url = format!(
+        "https://show.bilibili.com/api/ticket/order/createstatus?project_id={}&token={}&timestamp={}",
+        project_id, pay_token, timestamp
+    );
     if order_id != 0 {
         url = format!("{}&orderId={}", url, order_id);
     }
