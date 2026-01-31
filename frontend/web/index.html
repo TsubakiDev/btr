@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Bilibili Ticket Rush</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="sidebar">
+            <div class="app-header">
+                <div class="app-title">BTR</div>
+                <div class="app-version">v6.6.2-indev</div>
+            </div>
+            <nav class="nav-tabs">
+                <a
+                    class="nav-tab active"
+                    data-tab="home"
+                    onclick="switchTab('home')"
+                    >首页</a
+                >
+                <a
+                    class="nav-tab"
+                    data-tab="accounts"
+                    onclick="switchTab('accounts')"
+                    >账号管理</a
+                >
+                <a
+                    class="nav-tab"
+                    data-tab="monitor"
+                    onclick="switchTab('monitor')"
+                    >监控</a
+                >
+                <a
+                    class="nav-tab"
+                    data-tab="projects"
+                    onclick="switchTab('projects')"
+                    >项目列表</a
+                >
+                <a
+                    class="nav-tab"
+                    data-tab="settings"
+                    onclick="switchTab('settings')"
+                    >设置</a
+                >
+                <a class="nav-tab" data-tab="logs" onclick="switchTab('logs')"
+                    >日志</a
+                >
+                <a class="nav-tab" data-tab="help" onclick="switchTab('help')"
+                    >帮助</a
+                >
+            </nav>
+        </div>
+
+        <div id="main-content">
+            <div id="tab-home" class="tab-content active">
+                <div class="card">
+                    <h2 class="card-title">欢迎使用 BTR</h2>
+                    <p
+                        style="
+                            margin-bottom: 16px;
+                            color: var(--text-secondary);
+                        "
+                    >
+                        Bilibili Ticket Rush - 哔哩哔哩会员购抢票工具
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">快速开始</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 8px">
+                        1. 在"账号管理"中添加B站账号
+                    </p>
+                    <p style="color: var(--text-secondary); margin-bottom: 8px">
+                        2. 在"项目列表"中选择要抢票的项目
+                    </p>
+                    <p style="color: var(--text-secondary); margin-bottom: 8px">
+                        3. 在"设置"中配置抢票参数
+                    </p>
+                    <p style="color: var(--text-secondary)">
+                        4. 在"监控"页面开始抢票
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">系统信息</h3>
+                    <div
+                        style="
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 16px;
+                        "
+                    >
+                        <div>
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: var(--text-secondary);
+                                "
+                            >
+                                版本
+                            </div>
+                            <div style="font-weight: 500">v6.6.2-indev</div>
+                        </div>
+                        <div>
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: var(--text-secondary);
+                                "
+                            >
+                                运行时间
+                            </div>
+                            <div style="font-weight: 500" id="uptime">
+                                0 分钟
+                            </div>
+                        </div>
+                        <div>
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: var(--text-secondary);
+                                "
+                            >
+                                账号数量
+                            </div>
+                            <div style="font-weight: 500" id="account-count">
+                                0
+                            </div>
+                        </div>
+                        <div>
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: var(--text-secondary);
+                                "
+                            >
+                                日志数量
+                            </div>
+                            <div style="font-weight: 500" id="log-count">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-accounts" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">账号管理</h2>
+                    <button
+                        class="btn btn-primary"
+                        onclick="showAddAccountModal()"
+                    >
+                        添加账号
+                    </button>
+                    <button class="btn btn-success" onclick="reloadAccounts()">
+                        刷新
+                    </button>
+                    <button
+                        class="btn btn-warning"
+                        onclick="showQrcodeLoginModal()"
+                    >
+                        扫码登录
+                    </button>
+                </div>
+                <div class="card">
+                    <div id="accounts-loading" class="loading">
+                        <div class="spinner"></div>
+                        <div>加载账号中...</div>
+                    </div>
+                    <ul
+                        id="accounts-list"
+                        class="account-list"
+                        style="display: none"
+                    ></ul>
+                </div>
+            </div>
+
+            <div id="tab-monitor" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">抢票监控</h2>
+
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px">
+                        <button class="btn btn-success" onclick="startGrab()">
+                            开始抢票
+                        </button>
+                        <button class="btn btn-danger" onclick="stopGrab()">
+                            停止抢票
+                        </button>
+                        <button
+                            class="btn btn-primary"
+                            onclick="refreshMonitor()"
+                        >
+                            刷新状态
+                        </button>
+                    </div>
+
+                    <div class="monitor-grid">
+                        <div class="monitor-card">
+                            <div class="monitor-title">运行状态</div>
+                            <div class="monitor-value" id="monitor-status">
+                                空闲
+                            </div>
+                            <div class="monitor-label">当前状态</div>
+                        </div>
+                        <div class="monitor-card">
+                            <div class="monitor-title">尝试次数</div>
+                            <div class="monitor-value" id="monitor-attempts">
+                                0
+                            </div>
+                            <div class="monitor-label">总尝试次数</div>
+                        </div>
+                        <div class="monitor-card">
+                            <div class="monitor-title">成功次数</div>
+                            <div
+                                class="monitor-value"
+                                id="monitor-success"
+                                style="color: var(--success-color)"
+                            >
+                                0
+                            </div>
+                            <div class="monitor-label">成功抢到票</div>
+                        </div>
+                        <div class="monitor-card">
+                            <div class="monitor-title">失败次数</div>
+                            <div
+                                class="monitor-value"
+                                id="monitor-failures"
+                                style="color: var(--error-color)"
+                            >
+                                0
+                            </div>
+                            <div class="monitor-label">抢票失败</div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="
+                            text-align: center;
+                            margin-top: 16px;
+                            padding: 12px;
+                            background: rgba(0, 0, 0, 0.02);
+                            border-radius: 6px;
+                        "
+                    >
+                        <span
+                            style="
+                                color: var(--text-secondary);
+                                font-size: 14px;
+                            "
+                        >
+                            运行时间:
+                            <span
+                                id="uptime"
+                                style="
+                                    font-weight: 600;
+                                    color: var(--text-primary);
+                                "
+                                >0 分钟</span
+                            >
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">实时日志</h3>
+                    <div
+                        id="monitor-logs"
+                        class="log-container"
+                        style="max-height: 300px"
+                    ></div>
+                </div>
+            </div>
+
+            <!-- Projects Tab -->
+            <div id="tab-projects" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">项目列表</h2>
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px">
+                        <button
+                            class="btn btn-primary"
+                            onclick="refreshProjects()"
+                        >
+                            刷新项目
+                        </button>
+                        <button class="btn btn-success" onclick="addProject()">
+                            添加项目
+                        </button>
+                    </div>
+                    <div id="projects-loading" class="loading">
+                        <div class="spinner"></div>
+                        <div>加载项目中...</div>
+                    </div>
+                    <div
+                        id="projects-list"
+                        class="project-list"
+                        style="display: none"
+                    ></div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">抢票设置</h2>
+                    <div class="settings-group">
+                        <div class="settings-title">基本设置</div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">抢票模式</div>
+                                <div class="settings-description">
+                                    选择抢票的工作模式
+                                </div>
+                            </div>
+                            <select class="select-input" id="grab-mode">
+                                <option value="0">普通模式</option>
+                                <option value="1">快速模式</option>
+                                <option value="2">极速模式</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">延迟时间(秒)</div>
+                                <div class="settings-description">
+                                    每次请求之间的延迟时间
+                                </div>
+                            </div>
+                            <input
+                                type="number"
+                                class="number-input"
+                                id="delay-time"
+                                value="2"
+                                min="1"
+                                max="10"
+                            />
+                        </div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">最大尝试次数</div>
+                                <div class="settings-description">
+                                    每个账号的最大抢票尝试次数
+                                </div>
+                            </div>
+                            <input
+                                type="number"
+                                class="number-input"
+                                id="max-attempts"
+                                value="100"
+                                min="1"
+                                max="1000"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-title">推送设置</div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">启用推送通知</div>
+                                <div class="settings-description">
+                                    抢票成功或失败时发送通知
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="enable-push" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">Bark Token</div>
+                                <div class="settings-description">
+                                    iOS Bark推送服务的Token
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="bark-token"
+                                placeholder="输入Bark Token"
+                                style="width: 300px"
+                            />
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">PushPlus Token</div>
+                                <div class="settings-description">
+                                    PushPlus推送服务的Token
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="pushplus-token"
+                                placeholder="输入PushPlus Token"
+                                style="width: 300px"
+                            />
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">方糖推送Token</div>
+                                <div class="settings-description">
+                                    方糖(Server酱)推送服务的Token
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="fangtang-token"
+                                placeholder="输入方糖推送Token"
+                                style="width: 300px"
+                            />
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">
+                                    钉钉机器人Token
+                                </div>
+                                <div class="settings-description">
+                                    钉钉群机器人的Access Token
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="dingtalk-token"
+                                placeholder="输入钉钉机器人Token"
+                                style="width: 300px"
+                            />
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">企业微信Token</div>
+                                <div class="settings-description">
+                                    企业微信机器人的Webhook Key
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="wechat-token"
+                                placeholder="输入企业微信Token"
+                                style="width: 300px"
+                            />
+                        </div>
+
+                        <div class="settings-subgroup">
+                            <div class="settings-subtitle">Gotify设置</div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">Gotify URL</div>
+                                    <div class="settings-description">
+                                        Gotify服务器地址
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="gotify-url"
+                                    placeholder="http://your-gotify-server.com"
+                                    style="width: 300px"
+                                />
+                            </div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">
+                                        Gotify Token
+                                    </div>
+                                    <div class="settings-description">
+                                        Gotify应用的Token
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="gotify-token"
+                                    placeholder="输入Gotify Token"
+                                    style="width: 300px"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="settings-subgroup">
+                            <div class="settings-subtitle">SMTP邮件设置</div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">SMTP服务器</div>
+                                    <div class="settings-description">
+                                        邮件服务器地址
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="smtp-server"
+                                    placeholder="smtp.example.com"
+                                    style="width: 300px"
+                                />
+                            </div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">SMTP端口</div>
+                                    <div class="settings-description">
+                                        邮件服务器端口
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="smtp-port"
+                                    placeholder="465"
+                                    style="width: 100px"
+                                />
+                            </div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">用户名</div>
+                                    <div class="settings-description">
+                                        SMTP登录用户名
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="smtp-username"
+                                    placeholder="user@example.com"
+                                    style="width: 300px"
+                                />
+                            </div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">密码</div>
+                                    <div class="settings-description">
+                                        SMTP登录密码
+                                    </div>
+                                </div>
+                                <input
+                                    type="password"
+                                    class="form-input"
+                                    id="smtp-password"
+                                    placeholder="输入密码"
+                                    style="width: 300px"
+                                />
+                            </div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">发件人</div>
+                                    <div class="settings-description">
+                                        发件人邮箱地址
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="smtp-from"
+                                    placeholder="sender@example.com"
+                                    style="width: 300px"
+                                />
+                            </div>
+                            <div class="settings-item">
+                                <div>
+                                    <div class="settings-label">收件人</div>
+                                    <div class="settings-description">
+                                        收件人邮箱地址
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    id="smtp-to"
+                                    placeholder="recipient@example.com"
+                                    style="width: 300px"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-title">高级设置</div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">
+                                    自定义User-Agent
+                                </div>
+                                <div class="settings-description">
+                                    自定义请求的User-Agent
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="custom-ua" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">User-Agent</div>
+                                <div class="settings-description">
+                                    自定义的User-Agent字符串
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="user-agent"
+                                placeholder="Mozilla/5.0..."
+                                style="width: 400px"
+                            />
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px">
+                        <button
+                            class="btn btn-primary"
+                            onclick="saveSettings()"
+                        >
+                            保存设置
+                        </button>
+                        <button
+                            class="btn btn-danger"
+                            onclick="resetSettings()"
+                        >
+                            恢复默认
+                        </button>
+                        <button
+                            class="btn btn-success"
+                            onclick="testPush()"
+                            style="margin-left: 8px"
+                        >
+                            测试推送
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-logs" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">系统日志</h2>
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px">
+                        <button class="btn btn-primary" onclick="loadLogs()">
+                            刷新日志
+                        </button>
+                        <button class="btn btn-danger" onclick="clearLogs()">
+                            清空日志
+                        </button>
+                        <button class="btn btn-success" onclick="exportLogs()">
+                            导出日志
+                        </button>
+                    </div>
+                    <div
+                        id="logs-container"
+                        class="log-container"
+                        style="margin-top: 16px"
+                    ></div>
+                </div>
+            </div>
+
+            <div id="tab-help" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">帮助与关于</h2>
+                    <p style="margin-bottom: 12px">BTR v6.6.2-indev</p>
+                    <p
+                        style="
+                            color: var(--text-secondary);
+                            margin-bottom: 16px;
+                        "
+                    >
+                        本项目完全免费开源，仅供学习使用。
+                    </p>
+
+                    <div class="settings-group">
+                        <div class="settings-title">使用教程</div>
+                        <div
+                            style="
+                                color: var(--text-secondary);
+                                line-height: 1.6;
+                            "
+                        >
+                            <p>
+                                1.
+                                在"账号管理"中添加B站账号（支持Cookie登录和扫码登录）
+                            </p>
+                            <p>2. 在"项目列表"中选择要抢票的项目</p>
+                            <p>3. 在"设置"中配置抢票参数和推送通知</p>
+                            <p>4. 在"监控"页面开始抢票并查看实时状态</p>
+                            <p>5. 在"日志"页面查看详细的运行日志</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-title">常见问题</div>
+                        <div
+                            style="
+                                color: var(--text-secondary);
+                                line-height: 1.6;
+                            "
+                        >
+                            <p><strong>Q: 如何获取B站Cookie？</strong></p>
+                            <p>
+                                A:
+                                登录B站后，按F12打开开发者工具，在控制台输入<code>document.cookie</code>复制结果
+                            </p>
+
+                            <p><strong>Q: 抢票失败怎么办？</strong></p>
+                            <p>A: 检查网络连接、账号状态，或尝试更换抢票模式</p>
+
+                            <p><strong>Q: 支持多账号同时抢票吗？</strong></p>
+                            <p>A: 支持，可以在账号管理页面启用多个账号</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-title">项目信息</div>
+                        <div
+                            style="
+                                color: var(--text-secondary);
+                                line-height: 1.6;
+                            "
+                        >
+                            <p>
+                                GitHub:
+                                <a
+                                    href="https://github.com/biliticket/bili_ticket_rush"
+                                    target="_blank"
+                                    >https://github.com/biliticket/bili_ticket_rush</a
+                                >
+                            </p>
+                            <p>许可证: MIT License</p>
+                            <p>反馈: 请在GitHub Issues中提交问题</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="add-account-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">添加账号</h3>
+                <div class="form-group">
+                    <label class="form-label">Cookie</label>
+                    <textarea
+                        class="form-input"
+                        id="account-cookie"
+                        placeholder="请输入Cookie"
+                        rows="4"
+                    ></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button
+                        class="btn btn-primary"
+                        onclick="submitAddAccount()"
+                    >
+                        添加
+                    </button>
+                    <button
+                        class="btn btn-danger"
+                        onclick="closeAddAccountModal()"
+                    >
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="qrcode-login-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">扫码登录</h3>
+                <div class="qrcode-container">
+                    <img
+                        id="qrcode-img"
+                        class="qrcode-img"
+                        src=""
+                        alt="登录二维码"
+                    />
+                </div>
+                <div
+                    style="
+                        text-align: center;
+                        margin: 16px 0;
+                        color: var(--text-secondary);
+                    "
+                >
+                    请使用B站APP扫描二维码登录
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="refreshQrcode()">
+                        刷新二维码
+                    </button>
+                    <button class="btn btn-danger" onclick="closeQrcodeModal()">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="add-project-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">添加项目</h3>
+                <div class="form-group">
+                    <label class="form-label">项目ID</label>
+                    <input
+                        type="text"
+                        class="form-input"
+                        id="project-id"
+                        placeholder="请输入项目ID"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">项目名称</label>
+                    <input
+                        type="text"
+                        class="form-input"
+                        id="project-name"
+                        placeholder="请输入项目名称"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">项目URL</label>
+                    <input
+                        type="text"
+                        class="form-input"
+                        id="project-url"
+                        placeholder="请输入项目URL"
+                    />
+                </div>
+                <div class="modal-actions">
+                    <button
+                        class="btn btn-primary"
+                        onclick="submitAddProject()"
+                    >
+                        添加
+                    </button>
+                    <button
+                        class="btn btn-danger"
+                        onclick="closeAddProjectModal()"
+                    >
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-ticket-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">选择场次、票种和购票人</h3>
+
+                <div
+                    id="screen-ticket-loading"
+                    style="text-align: center; padding: 20px"
+                >
+                    <div class="spinner"></div>
+                    <p>正在加载项目详情...</p>
+                </div>
+
+                <div id="screen-ticket-selector" style="display: none">
+                    <div class="form-group">
+                        <label class="form-label">场次</label>
+                        <select id="screen-select" class="form-input"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">票种</label>
+                        <select id="ticket-select" class="form-input"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">购票人</label>
+                        <div
+                            id="buyer-loading"
+                            style="
+                                display: none;
+                                padding: 10px;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                class="spinner"
+                                style="width: 20px; height: 20px"
+                            ></div>
+                            <span style="margin-left: 10px"
+                                >正在加载购票人...</span
+                            >
+                        </div>
+                        <div id="buyer-list" style="display: none"></div>
+                        <div
+                            id="buyer-error"
+                            style="display: none; color: #ff4444; padding: 10px"
+                        >
+                            加载购票人失败，请重试
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button
+                            class="btn btn-primary"
+                            onclick="confirmScreenTicketSelection()"
+                        >
+                            确认选择
+                        </button>
+                        <button
+                            class="btn btn-danger"
+                            onclick="closeScreenTicketModal()"
+                        >
+                            取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>
