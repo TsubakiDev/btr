@@ -1,7 +1,7 @@
 [package]
 name = "common"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -29,8 +29,8 @@ machine-uid = "0.5.3"
 lazy_static = "1.4"
 image = "0.25"
 
-whoami = "1.5.1"   
-ctrlc = "3.4.0"   
+whoami = "1.5.1"
+ctrlc = "3.4.0"
 
 #captcha
 bili_ticket_gt = { git = "https://github.com/Amorter/biliTicker_gt",branch = "rust"}
