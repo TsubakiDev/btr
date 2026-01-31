@@ -13,7 +13,6 @@ Thumbs.db
 *.tmp
 *.log
 /学习
-*.json
 *txt
 config.json
 config
@@ -21,3 +20,5 @@ config
 /models/
 /效果/
 permissions
+/frontend/Log
+models
