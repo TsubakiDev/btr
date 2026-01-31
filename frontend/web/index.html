@@ -865,29 +865,76 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">购票人</label>
-                        <div
-                            id="buyer-loading"
-                            style="
-                                display: none;
-                                padding: 10px;
-                                text-align: center;
-                            "
+                        <label class="form-label">购票人类型</label>
+                        <select
+                            id="buyer-type-select"
+                            class="form-input"
+                            onchange="onBuyerTypeChange()"
                         >
+                            <option value="1">实名购票人</option>
+                            <option value="0">非实名购票人</option>
+                        </select>
+                    </div>
+
+                    <div id="real-name-buyer-section">
+                        <div class="form-group">
+                            <label class="form-label">实名购票人</label>
                             <div
-                                class="spinner"
-                                style="width: 20px; height: 20px"
-                            ></div>
-                            <span style="margin-left: 10px"
-                                >正在加载购票人...</span
+                                id="buyer-loading"
+                                style="
+                                    display: none;
+                                    padding: 10px;
+                                    text-align: center;
+                                "
                             >
+                                <div
+                                    class="spinner"
+                                    style="width: 20px; height: 20px"
+                                ></div>
+                                <span style="margin-left: 10px"
+                                    >正在加载购票人...</span
+                                >
+                            </div>
+                            <div id="buyer-list" style="display: none"></div>
+                            <div
+                                id="buyer-error"
+                                style="
+                                    display: none;
+                                    color: #ff4444;
+                                    padding: 10px;
+                                "
+                            >
+                                加载购票人失败，请重试
+                            </div>
                         </div>
-                        <div id="buyer-list" style="display: none"></div>
-                        <div
-                            id="buyer-error"
-                            style="display: none; color: #ff4444; padding: 10px"
-                        >
-                            加载购票人失败，请重试
+                    </div>
+
+                    <div id="non-real-name-buyer-section" style="display: none">
+                        <div class="form-group">
+                            <label class="form-label">姓名</label>
+                            <input
+                                type="text"
+                                id="no-bind-name"
+                                class="form-input"
+                                placeholder="请输入姓名"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">手机号</label>
+                            <input
+                                type="tel"
+                                id="no-bind-tel"
+                                class="form-input"
+                                placeholder="请输入手机号"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <button
+                                class="btn btn-secondary"
+                                onclick="saveNoBindBuyerInfo()"
+                            >
+                                保存非实名购票人信息
+                            </button>
                         </div>
                     </div>
 

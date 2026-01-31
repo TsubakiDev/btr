@@ -99,6 +99,8 @@ struct AppStateInner {
     ticket_info_last_request_time: Option<std::time::Instant>,
     confirm_ticket_info: Option<String>,
     selected_buyer_list: Option<Vec<common::ticket::BuyerInfo>>,
+    selected_no_bind_buyer_info: Option<common::ticket::NoBindBuyerInfo>,
+    buyer_type: u8, // 0: 非实名购票人, 1: 实名购票人
 
     // Buyer management
     show_add_buyer_window: Option<String>,
@@ -146,7 +148,7 @@ impl AppState {
             machine_id: common::machine_id::get_machine_id_ob(),
             selected_tab: 0,
             is_loading: false,
-            running_status: "空闲ing".to_string(),
+            running_status: "空闲".to_string(),
             logs: Vec::new(),
             show_log_window: false,
             show_login_window: false,
@@ -187,6 +189,8 @@ impl AppState {
             ticket_info_last_request_time: None,
             confirm_ticket_info: None,
             selected_buyer_list: None,
+            selected_no_bind_buyer_info: None,
+            buyer_type: 1, // 默认使用实名购票人
             show_add_buyer_window: None,
             show_orderlist_window: None,
             total_order_data: None,
@@ -795,8 +799,39 @@ fn start_grab_ticket(state: State<'_, AppState>) -> Result<String, String> {
         .cookie_manager
         .clone()
         .ok_or_else(|| "账号未初始化，请重新添加账号".to_string())?;
-
     // 创建 BilibiliTicket
+    // 根据购票人信息类型设置id_bind
+    // id_bind: 0 - 使用非绑定购票人信息 (no_bind_buyer_info)
+    // id_bind: 1 | 2 - 使用绑定购票人信息 (buyer_info)
+
+    // 根据购票人类型设置id_bind和相应的购票人信息
+    let (id_bind, buyer_info, no_bind_buyer_info) = match state.buyer_type {
+        0 => {
+            // 非实名购票人信息
+            if state.selected_no_bind_buyer_info.is_none() {
+                return Err("请先设置非实名购票人信息".to_string());
+            }
+            (0, None, state.selected_no_bind_buyer_info.clone())
+        }
+        1 => {
+            // 实名购票人信息
+            if state.selected_buyer_list.is_none() {
+                return Err("请先选择实名购票人信息".to_string());
+            }
+            (1, state.selected_buyer_list.clone(), None)
+        }
+        2 => {
+            // 实名购票人信息（备用模式）
+            if state.selected_buyer_list.is_none() {
+                return Err("请先选择实名购票人信息".to_string());
+            }
+            (2, state.selected_buyer_list.clone(), None)
+        }
+        _ => {
+            return Err("无效的购票人类型".to_string());
+        }
+    };
+
     let biliticket = BilibiliTicket {
         uid: account.uid,
         method: 0,
@@ -812,11 +847,11 @@ fn start_grab_ticket(state: State<'_, AppState>) -> Result<String, String> {
             .selected_screen_id
             .map(|id| id.to_string())
             .unwrap_or_default(),
-        id_bind: 1,
+        id_bind,
         project_info: state.ticket_info.clone(),
         all_buyer_info: None,
-        buyer_info: state.selected_buyer_list.clone(),
-        no_bind_buyer_info: None,
+        buyer_info,
+        no_bind_buyer_info,
         select_ticket_id: state.selected_ticket_id.map(|id| id.to_string()),
         pay_money: None,
         count: Some(1),
@@ -1023,13 +1058,54 @@ fn set_selected_ticket(state: State<'_, AppState>, id: Option<i64>) -> Result<()
 #[tauri::command]
 fn set_selected_buyer_list(
     state: State<'_, AppState>,
-    buyers: Option<Vec<common::ticket::BuyerInfo>>,
+    buyer_list: Option<Vec<common::ticket::BuyerInfo>>,
 ) -> Result<(), String> {
     let mut state = state
         .inner
         .lock()
         .map_err(|_| "state lock failed".to_string())?;
-    state.selected_buyer_list = buyers;
+    state.selected_buyer_list = buyer_list;
+    Ok(())
+}
+
+#[tauri::command]
+fn set_buyer_type(state: State<'_, AppState>, buyer_type: u8) -> Result<(), String> {
+    let mut state = state
+        .inner
+        .lock()
+        .map_err(|_| "state lock failed".to_string())?;
+    state.buyer_type = buyer_type;
+    Ok(())
+}
+
+#[tauri::command]
+fn set_no_bind_buyer_info(
+    state: State<'_, AppState>,
+    name: String,
+    tel: String,
+) -> Result<(), String> {
+    let mut state = state
+        .inner
+        .lock()
+        .map_err(|_| "state lock failed".to_string())?;
+
+    let no_bind_buyer_info = common::ticket::NoBindBuyerInfo {
+        name,
+        tel,
+        uid: 0, // 非实名购票人没有uid
+    };
+
+    state.selected_no_bind_buyer_info = Some(no_bind_buyer_info);
+    Ok(())
+}
+
+#[tauri::command]
+fn clear_no_bind_buyer_info(state: State<'_, AppState>) -> Result<(), String> {
+    let mut state = state
+        .inner
+        .lock()
+        .map_err(|_| "state lock failed".to_string())?;
+    state.selected_no_bind_buyer_info = None;
     Ok(())
 }
 
@@ -1447,10 +1523,6 @@ fn poll_qrcode_status(
 }
 
 fn main() {
-    std::env::set_var("LIBGL_ALWAYS_SOFTWARE", "1");
-    std::env::set_var("MESA_GL_VERSION_OVERRIDE", "3.3");
-    std::env::set_var("GALLIUM_DRIVER", "llvmpipe");
-
     if let Err(e) = common::init_logger() {
         eprintln!("初始化日志失败，原因: {}", e);
     }
@@ -1522,7 +1594,10 @@ fn main() {
             get_recent_logs,
             save_settings,
             clear_logs,
-            poll_qrcode_status
+            poll_qrcode_status,
+            set_buyer_type,
+            set_no_bind_buyer_info,
+            clear_no_bind_buyer_info
         ])
         .run(tauri::generate_context!())
         .expect("tauri run failed");

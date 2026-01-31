@@ -131,11 +131,22 @@ function showAddAccountModal() {
   }
 }
 
+function closeAddProjectModal() {
+  const modal = document.getElementById("add-project-modal");
+  modal.classList.remove("active");
+
+  // 清空表单
+  document.getElementById("project-id").value = "";
+  document.getElementById("project-name").value = "";
+  document.getElementById("project-url").value = "";
+}
+
 function closeAddAccountModal() {
   const modal = document.getElementById("add-account-modal");
   if (modal) {
     modal.classList.remove("active");
   }
+
   const cookieInput = document.getElementById("account-cookie");
   if (cookieInput) {
     cookieInput.value = "";
@@ -225,13 +236,6 @@ function startQrcodePolling(qrcodeKey) {
 
 function showAddProjectModal() {
   document.getElementById("add-project-modal").classList.add("active");
-}
-
-function closeAddProjectModal() {
-  document.getElementById("add-project-modal").classList.remove("active");
-  document.getElementById("project-id").value = "";
-  document.getElementById("project-name").value = "";
-  document.getElementById("project-url").value = "";
 }
 
 async function submitAddAccount() {
@@ -497,14 +501,43 @@ function showScreenTicketModal() {
   const loading = document.getElementById("screen-ticket-loading");
   const selector = document.getElementById("screen-ticket-selector");
 
+  modal.classList.add("active");
   loading.style.display = "block";
   selector.style.display = "none";
-  modal.classList.add("active");
+
+  // 重置购票人类型为默认值（实名购票人）
+  document.getElementById("buyer-type-select").value = "1";
+  onBuyerTypeChange();
 }
 
 function closeScreenTicketModal() {
   const modal = document.getElementById("screen-ticket-modal");
+  const loading = document.getElementById("screen-ticket-loading");
+  const selector = document.getElementById("screen-ticket-selector");
+
   modal.classList.remove("active");
+
+  // 重置加载状态
+  loading.style.display = "block";
+
+  // 重置选择器状态
+  selector.style.display = "none";
+  document.getElementById("screen-select").innerHTML = "";
+  document.getElementById("ticket-select").innerHTML = "";
+
+  // 重置购票人状态
+  document.getElementById("buyer-list").innerHTML = "";
+  document.getElementById("buyer-list").style.display = "none";
+  document.getElementById("buyer-loading").style.display = "none";
+  document.getElementById("buyer-error").style.display = "none";
+
+  // 重置非实名购票人表单
+  document.getElementById("no-bind-name").value = "";
+  document.getElementById("no-bind-tel").value = "";
+
+  // 重置购票人类型为默认值
+  document.getElementById("buyer-type-select").value = "1";
+  onBuyerTypeChange();
 }
 
 async function showScreenTicketSelector(ticketInfo) {
@@ -571,101 +604,167 @@ async function confirmScreenTicketSelection() {
   try {
     const screenId = document.getElementById("screen-select").value;
     const ticketId = document.getElementById("ticket-select").value;
+    const buyerType = document.getElementById("buyer-type-select").value;
 
     if (!screenId || !ticketId) {
       alert("请选择场次和票种");
       return;
     }
 
-    const selectedBuyers = getSelectedBuyers();
-    console.log("选中的购票人数据:", JSON.stringify(selectedBuyers, null, 2));
-    console.log("购票人数量:", selectedBuyers.length);
+    // 根据购票人类型处理
+    if (buyerType === "1") {
+      // 实名购票人
+      const selectedBuyers = getSelectedBuyers();
+      console.log("选中的购票人数据:", JSON.stringify(selectedBuyers, null, 2));
+      console.log("购票人数量:", selectedBuyers.length);
 
-    if (selectedBuyers.length === 0) {
-      alert("请至少选择一个购票人");
-      return;
-    }
-
-    const invalidBuyers = [];
-    selectedBuyers.forEach((buyer, index) => {
-      console.log(`购票人 ${index + 1}:`, {
-        id: buyer.id,
-        name: buyer.name,
-        tel: buyer.tel,
-        personal_id: buyer.personal_id,
-        id_type: buyer.id_type,
-        is_default: buyer.is_default,
-      });
-
-      if (!buyer.id || !buyer.name || !buyer.tel) {
-        invalidBuyers.push({
-          index: index + 1,
-          name: buyer.name || "未知",
-          missingFields: [],
-        });
-        if (!buyer.id)
-          invalidBuyers[invalidBuyers.length - 1].missingFields.push("id");
-        if (!buyer.name)
-          invalidBuyers[invalidBuyers.length - 1].missingFields.push("name");
-        if (!buyer.tel)
-          invalidBuyers[invalidBuyers.length - 1].missingFields.push("tel");
+      if (selectedBuyers.length === 0) {
+        alert("请至少选择一个购票人");
+        return;
       }
-    });
+    } else if (buyerType === "0") {
+      // 非实名购票人
+      const name = document.getElementById("no-bind-name").value.trim();
+      const tel = document.getElementById("no-bind-tel").value.trim();
 
-    if (invalidBuyers.length > 0) {
-      const errorMsg = invalidBuyers
-        .map(
-          (b) =>
-            `购票人 ${b.index} (${b.name}) 缺少字段: ${b.missingFields.join(", ")}`,
-        )
-        .join("\n");
-      alert(`购票人数据不完整:\n${errorMsg}`);
+      if (!name || !tel) {
+        alert("请填写非实名购票人的姓名和手机号");
+        return;
+      }
+
+      // 验证手机号格式
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneRegex.test(tel)) {
+        alert("请输入有效的手机号");
+        return;
+      }
+    } else {
+      alert("请选择购票人类型");
       return;
     }
 
+    // 购票人验证逻辑已移到购票人类型处理部分
+    // 设置场次和票种
     await invoke("set_selected_screen", {
       index: null,
       id: parseInt(screenId),
     });
-
     await invoke("set_selected_ticket", {
       id: parseInt(ticketId),
     });
 
-    const validatedBuyers = selectedBuyers.map((buyer) => ({
-      id: Number(buyer.id),
-      uid: Number(buyer.uid) || 0,
-      personal_id: String(buyer.personal_id || ""),
-      name: String(buyer.name || ""),
-      tel: String(buyer.tel || ""),
-      id_type: Number(buyer.id_type) || 1,
-      is_default: Number(buyer.is_default) || 0,
-      id_card_front: String(buyer.id_card_front || ""),
-      id_card_back: String(buyer.id_card_back || ""),
-    }));
+    // 设置购票人类型
+    await invoke("set_buyer_type", { buyerType: parseInt(buyerType) });
 
-    console.log(
-      "验证后的购票人数据:",
-      JSON.stringify(validatedBuyers, null, 2),
-    );
+    if (buyerType === "1") {
+      // 实名购票人
+      const selectedBuyers = getSelectedBuyers();
+      const validatedBuyers = selectedBuyers.map((buyer) => ({
+        id: Number(buyer.id),
+        uid: Number(buyer.uid) || 0,
+        personal_id: String(buyer.personal_id || ""),
+        name: String(buyer.name || ""),
+        tel: String(buyer.tel || ""),
+        id_type: Number(buyer.id_type) || 1,
+        is_default: Number(buyer.is_default) || 0,
+        id_card_front: String(buyer.id_card_front || ""),
+        id_card_back: String(buyer.id_card_back || ""),
+      }));
 
-    await invoke("set_selected_buyer_list", {
-      buyers: validatedBuyers,
-    });
+      console.log(
+        "验证后的实名购票人数据:",
+        JSON.stringify(validatedBuyers, null, 2),
+      );
 
-    console.log(
-      "已设置场次ID:",
-      screenId,
-      "票种ID:",
-      ticketId,
-      "购票人数:",
-      selectedBuyers.length,
-    );
+      // 设置实名购票人列表
+      await invoke("set_selected_buyer_list", { buyerList: validatedBuyers });
 
+      // 清除非实名购票人信息
+      await invoke("clear_no_bind_buyer_info");
+
+      console.log(
+        "已设置场次:",
+        screenId,
+        "票种:",
+        ticketId,
+        "实名购票人数量:",
+        validatedBuyers.length,
+      );
+    } else if (buyerType === "0") {
+      // 非实名购票人
+      const name = document.getElementById("no-bind-name").value.trim();
+      const tel = document.getElementById("no-bind-tel").value.trim();
+
+      console.log("非实名购票人信息:", { name, tel });
+
+      // 设置非实名购票人信息
+      await invoke("set_no_bind_buyer_info", { name, tel });
+
+      // 清空实名购票人列表
+      await invoke("set_selected_buyer_list", { buyerList: null });
+
+      console.log(
+        "已设置场次:",
+        screenId,
+        "票种:",
+        ticketId,
+        "非实名购票人:",
+        name,
+      );
+    }
+
+    alert("选择成功！");
     closeScreenTicketModal();
   } catch (error) {
-    console.error("设置场次票种失败:", error);
-    alert("设置失败: " + error);
+    console.error("确认选择失败:", error);
+    alert("选择失败: " + error);
+  }
+}
+
+// 购票人类型切换函数
+function onBuyerTypeChange() {
+  const buyerType = document.getElementById("buyer-type-select").value;
+  const realNameSection = document.getElementById("real-name-buyer-section");
+  const nonRealNameSection = document.getElementById(
+    "non-real-name-buyer-section",
+  );
+
+  if (buyerType === "1") {
+    // 显示实名购票人部分
+    realNameSection.style.display = "block";
+    nonRealNameSection.style.display = "none";
+  } else if (buyerType === "0") {
+    // 显示非实名购票人部分
+    realNameSection.style.display = "none";
+    nonRealNameSection.style.display = "block";
+  }
+}
+
+// 保存非实名购票人信息
+async function saveNoBindBuyerInfo() {
+  try {
+    const name = document.getElementById("no-bind-name").value.trim();
+    const tel = document.getElementById("no-bind-tel").value.trim();
+
+    if (!name || !tel) {
+      alert("请填写姓名和手机号");
+      return;
+    }
+
+    // 验证手机号格式
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!phoneRegex.test(tel)) {
+      alert("请输入有效的手机号");
+      return;
+    }
+
+    // 设置非实名购票人信息
+    await invoke("set_no_bind_buyer_info", { name, tel });
+
+    alert("非实名购票人信息保存成功！");
+  } catch (error) {
+    console.error("保存非实名购票人信息失败:", error);
+    alert("保存失败: " + error);
   }
 }
 
