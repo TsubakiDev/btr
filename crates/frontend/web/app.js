@@ -1,7 +1,7 @@
 let invoke = null;
 
 let qrcodePollingInterval = null;
-
+let currentTaskId = null;
 let monitorStats = {
   attempts: 0,
   success: 0,
@@ -1037,6 +1037,8 @@ async function startGrab() {
     await invoke("set_grab_mode", { mode: 1 });
     const taskId = await invoke("start_grab_ticket");
 
+    currentTaskId = taskId;
+
     document.getElementById("monitor-status").textContent = "运行中";
     document.getElementById("monitor-status").style.color =
       "var(--success-color)";
@@ -1045,7 +1047,7 @@ async function startGrab() {
     await refreshMonitor();
   } catch (error) {
     console.error("启动抢票失败:", error);
-    showError("清空失败: " + error);
+    showError("启动失败: " + error);
   }
 }
 
@@ -1053,6 +1055,17 @@ async function stopGrab() {
   try {
     if (!invoke) {
       throw new Error("Tauri invoke function not available");
+    }
+
+    if (currentTaskId) {
+      try {
+        await invoke("cancel_task", { taskId: currentTaskId });
+        showSuccess("已取消抢票任务: " + currentTaskId);
+      } catch (cancelError) {
+        console.warn("取消任务失败:", cancelError);
+        showWarning("取消任务失败，但已停止抢票模式: " + cancelError);
+      }
+      currentTaskId = null;
     }
 
     await invoke("set_grab_mode", { mode: 0 });
@@ -1098,33 +1111,11 @@ async function refreshMonitor() {
       monitorStats.failures = stats.failures || 0;
       updateMonitorStats();
     }
-
-    await updateMonitorLogs();
   } catch (error) {
     console.error("刷新监控失败:", error);
   }
 }
 
-async function updateMonitorLogs() {
-  try {
-    if (!invoke) {
-      return;
-    }
-
-    const logs = await invoke("get_recent_logs", { count: 20 });
-    const container = document.getElementById("monitor-logs");
-    if (container) {
-      container.innerHTML = logs
-        .map((log) => `<div class="log-entry">${log}</div>`)
-        .join("");
-      container.scrollTop = container.scrollHeight;
-    }
-  } catch (error) {
-    console.error("更新监控日志失败:", error);
-  }
-}
-
-// Settings functions
 async function loadSettings() {
   try {
     if (!invoke) {
@@ -1401,6 +1392,9 @@ async function init() {
 
     resetMonitorStats();
 
+    // 初始化抢票日志
+    await initGrabLogs();
+
     setInterval(() => {
       const logsTab = document.getElementById("tab-logs");
       if (logsTab && logsTab.classList.contains("active")) {
@@ -1484,7 +1478,6 @@ function switchTab(tabName) {
       if (typeof refreshMonitor === "function") {
         refreshMonitor();
       }
-      // Reset monitor stats
       if (typeof resetMonitorStats === "function") {
         resetMonitorStats();
       }
@@ -1541,6 +1534,227 @@ document.addEventListener("keydown", function (e) {
     closeAddProjectModal();
   }
 });
+
+let grabLogs = [];
+let autoScrollEnabled = true;
+let logFilters = {
+  info: true,
+  debug: true,
+  warn: true,
+  error: true,
+  success: true,
+};
+
+async function loadGrabLogs() {
+  const container = document.getElementById("grab-logs-container");
+  try {
+    if (!invoke) {
+      throw new Error("Tauri invoke function not available");
+    }
+    const logs = await invoke("get_grab_logs");
+
+    if (logs && logs.length > 0) {
+      grabLogs = logs;
+      updateGrabLogsDisplay();
+    } else {
+      container.innerHTML = '<div class="log-entry">暂无抢票日志</div>';
+      updateLogStats();
+    }
+  } catch (error) {
+    console.error("Failed to load grab logs:", error);
+    container.innerHTML = `<div style="color: var(--error-color);">加载抢票日志失败: ${error.message}</div>`;
+    updateLogStats();
+  }
+}
+
+function updateGrabLogsDisplay() {
+  const container = document.getElementById("grab-logs-container");
+  const filteredLogs = grabLogs.filter((log) => {
+    if (log.includes("INFO:")) return logFilters.info;
+    if (log.includes("DEBUG:")) return logFilters.debug;
+    if (log.includes("WARN:")) return logFilters.warn;
+    if (log.includes("ERROR:")) return logFilters.error;
+    return logFilters.success;
+  });
+
+  if (filteredLogs.length > 0) {
+    container.innerHTML = filteredLogs
+      .map((log) => formatLogEntry(log))
+      .join("");
+
+    if (autoScrollEnabled) {
+      container.scrollTop = container.scrollHeight;
+    }
+  } else {
+    container.innerHTML = '<div class="log-entry">暂无符合条件的日志</div>';
+  }
+
+  updateLogStats();
+}
+
+function formatLogEntry(log) {
+  let levelClass = "";
+  let levelText = "";
+
+  if (log.includes("INFO:")) {
+    levelClass = "info";
+    levelText = "INFO";
+  } else if (log.includes("DEBUG:")) {
+    levelClass = "debug";
+    levelText = "DEBUG";
+  } else if (log.includes("WARN:")) {
+    levelClass = "warn";
+    levelText = "WARN";
+  } else if (log.includes("ERROR:")) {
+    levelClass = "error";
+    levelText = "ERROR";
+  } else {
+    levelClass = "success";
+    levelText = "SUCCESS";
+  }
+
+  const messageMatch = log.match(
+    /\[.*?\]\s*(?:INFO|DEBUG|WARN|ERROR|SUCCESS)?:?\s*(.*)/,
+  );
+  const message = messageMatch ? messageMatch[1] : log;
+
+  return `
+    <div class="log-entry ${levelClass}">
+      <span class="log-level ${levelClass}">${levelText}</span>
+      <span class="log-message">${message}</span>
+    </div>
+  `;
+}
+
+function updateLogStats() {
+  const infoCount = grabLogs.filter((log) => log.includes("INFO:")).length;
+  const debugCount = grabLogs.filter((log) => log.includes("DEBUG:")).length;
+  const warnCount = grabLogs.filter((log) => log.includes("WARN:")).length;
+  const errorCount = grabLogs.filter((log) => log.includes("ERROR:")).length;
+  const successCount = grabLogs.filter(
+    (log) =>
+      !log.includes("INFO:") &&
+      !log.includes("DEBUG:") &&
+      !log.includes("WARN:") &&
+      !log.includes("ERROR:"),
+  ).length;
+
+  document.getElementById("grab-log-count").textContent = grabLogs.length;
+  document.getElementById("info-count").textContent = infoCount;
+  document.getElementById("debug-count").textContent = debugCount;
+  document.getElementById("warn-count").textContent = warnCount;
+  document.getElementById("error-count").textContent = errorCount;
+}
+
+async function clearGrabLogs() {
+  if (!confirm("确定要清空所有抢票日志吗？此操作不可撤销！")) return;
+
+  try {
+    await invoke("clear_grab_logs");
+    grabLogs = [];
+    updateGrabLogsDisplay();
+    showSuccess("抢票日志已清空");
+  } catch (error) {
+    showError("清空抢票日志失败: " + error);
+  }
+}
+
+async function exportGrabLogs() {
+  try {
+    const logs = grabLogs.join("\n");
+    const blob = new Blob([logs], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `grab_logs_${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showSuccess("抢票日志导出成功");
+  } catch (error) {
+    showError("导出抢票日志失败: " + error);
+  }
+}
+
+function toggleAutoScroll() {
+  autoScrollEnabled = !autoScrollEnabled;
+  const button = document.getElementById("auto-scroll-btn");
+  button.textContent = `自动滚动: ${autoScrollEnabled ? "开启" : "关闭"}`;
+  button.classList.toggle("btn-info", autoScrollEnabled);
+  button.classList.toggle("btn-secondary", !autoScrollEnabled);
+}
+
+function toggleLogFilter(level) {
+  logFilters[level] = !logFilters[level];
+  const button = document.getElementById(`filter-${level}-btn`);
+  if (button) {
+    button.classList.toggle("active", logFilters[level]);
+  }
+  updateGrabLogsDisplay();
+}
+
+function setupGrabLogsEventListeners() {
+  // 按钮事件监听
+  document
+    .getElementById("refresh-grab-logs-btn")
+    ?.addEventListener("click", loadGrabLogs);
+  document
+    .getElementById("clear-grab-logs-btn")
+    ?.addEventListener("click", clearGrabLogs);
+  document
+    .getElementById("export-grab-logs-btn")
+    ?.addEventListener("click", exportGrabLogs);
+  document
+    .getElementById("auto-scroll-btn")
+    ?.addEventListener("click", toggleAutoScroll);
+
+  // 过滤器按钮事件监听
+  document
+    .getElementById("filter-info-btn")
+    ?.addEventListener("click", () => toggleLogFilter("info"));
+  document
+    .getElementById("filter-debug-btn")
+    ?.addEventListener("click", () => toggleLogFilter("debug"));
+  document
+    .getElementById("filter-warn-btn")
+    ?.addEventListener("click", () => toggleLogFilter("warn"));
+  document
+    .getElementById("filter-error-btn")
+    ?.addEventListener("click", () => toggleLogFilter("error"));
+  document
+    .getElementById("filter-success-btn")
+    ?.addEventListener("click", () => toggleLogFilter("success"));
+
+  // 搜索功能
+  const searchInput = document.getElementById("log-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      const searchTerm = this.value.toLowerCase();
+      const container = document.getElementById("grab-logs-container");
+      const logEntries = container.querySelectorAll(".log-entry");
+
+      logEntries.forEach((entry) => {
+        const text = entry.textContent.toLowerCase();
+        entry.style.display = text.includes(searchTerm) ? "" : "none";
+      });
+    });
+  }
+}
+
+// 初始化抢票日志
+async function initGrabLogs() {
+  setupGrabLogsEventListeners();
+  await loadGrabLogs();
+
+  // 设置自动刷新
+  setInterval(async () => {
+    const grabLogsTab = document.getElementById("tab-grab-logs");
+    if (grabLogsTab.classList.contains("active")) {
+      await loadGrabLogs();
+    }
+  }, 3000); // 每3秒刷新一次
+}
 
 window.addEventListener("beforeunload", function () {
   if (qrcodePollingInterval) {

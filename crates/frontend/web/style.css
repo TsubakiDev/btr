@@ -231,6 +231,133 @@ body {
     overflow-y: auto;
 }
 
+.grab-log-container {
+    max-height: 500px;
+}
+
+.log-stats {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 8px 0;
+}
+
+.log-stats span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.log-entry {
+    margin-bottom: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.log-entry:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.log-entry.info {
+    color: #58a6ff;
+}
+
+.log-entry.debug {
+    color: #8b949e;
+}
+
+.log-entry.warn {
+    color: #d29922;
+}
+
+.log-entry.error {
+    color: #f85149;
+}
+
+.log-entry.success {
+    color: #3fb950;
+}
+
+.log-timestamp {
+    color: #8b949e;
+    margin-right: 8px;
+}
+
+.log-level {
+    font-weight: bold;
+    margin-right: 8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.log-level.info {
+    background-color: rgba(88, 166, 255, 0.1);
+}
+
+.log-level.debug {
+    background-color: rgba(139, 148, 158, 0.1);
+}
+
+.log-level.warn {
+    background-color: rgba(210, 153, 34, 0.1);
+}
+
+.log-level.error {
+    background-color: rgba(248, 81, 73, 0.1);
+}
+
+.log-level.success {
+    background-color: rgba(63, 185, 80, 0.1);
+}
+
+.log-message {
+    word-break: break-all;
+}
+
+.log-filter-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.log-filter-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.log-filter-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.log-filter-btn.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.log-search {
+    flex: 1;
+    min-width: 200px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.log-search:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
 .log-entry {
     margin-bottom: 4px;
 }

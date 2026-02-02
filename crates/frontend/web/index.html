@@ -11,7 +11,7 @@
         <div id="sidebar">
             <div class="app-header">
                 <div class="app-title">BTR</div>
-                <div class="app-version">v6.6.2-indev</div>
+                <div class="app-version">v7.0.0</div>
             </div>
             <nav class="nav-tabs">
                 <a class="nav-tab active" data-tab="home">首页</a>
@@ -19,7 +19,8 @@
                 <a class="nav-tab" data-tab="monitor">监控</a>
                 <a class="nav-tab" data-tab="projects">项目列表</a>
                 <a class="nav-tab" data-tab="settings">设置</a>
-                <a class="nav-tab" data-tab="logs">日志</a>
+                <a class="nav-tab" data-tab="logs">系统日志</a>
+                <a class="nav-tab" data-tab="grab-logs">抢票日志</a>
                 <a class="nav-tab" data-tab="help">帮助</a>
             </nav>
         </div>
@@ -46,7 +47,7 @@
                     <div class="stats-grid">
                         <div>
                             <div class="stats-label">版本</div>
-                            <div class="stats-value">v6.6.2-indev</div>
+                            <div class="stats-value">v7.0.0</div>
                         </div>
                         <div>
                             <div class="stats-label">运行时间</div>
@@ -154,15 +155,6 @@
                             空闲
                         </span>
                     </div>
-                </div>
-
-                <div class="card">
-                    <h3 class="card-title">实时日志</h3>
-                    <div
-                        id="monitor-logs"
-                        class="log-container"
-                        style="max-height: 300px"
-                    ></div>
                 </div>
             </div>
 
@@ -549,6 +541,92 @@
                         id="logs-container"
                         class="log-container"
                         style="margin-top: 16px"
+                    ></div>
+                </div>
+            </div>
+
+            <div id="tab-grab-logs" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">抢票日志</h2>
+                    <div class="monitor-controls">
+                        <button
+                            class="btn btn-primary"
+                            id="refresh-grab-logs-btn"
+                        >
+                            刷新抢票日志
+                        </button>
+                        <button class="btn btn-danger" id="clear-grab-logs-btn">
+                            清空抢票日志
+                        </button>
+                        <button
+                            class="btn btn-success"
+                            id="export-grab-logs-btn"
+                        >
+                            导出抢票日志
+                        </button>
+                        <button class="btn btn-info" id="auto-scroll-btn">
+                            自动滚动: 开启
+                        </button>
+                    </div>
+                    <div class="log-filter-controls" style="margin-top: 10px">
+                        <input
+                            type="text"
+                            id="log-search"
+                            class="log-search"
+                            placeholder="搜索日志..."
+                        />
+                        <button
+                            class="log-filter-btn active"
+                            id="filter-info-btn"
+                        >
+                            信息
+                        </button>
+                        <button
+                            class="log-filter-btn active"
+                            id="filter-debug-btn"
+                        >
+                            调试
+                        </button>
+                        <button
+                            class="log-filter-btn active"
+                            id="filter-warn-btn"
+                        >
+                            警告
+                        </button>
+                        <button
+                            class="log-filter-btn active"
+                            id="filter-error-btn"
+                        >
+                            错误
+                        </button>
+                        <button
+                            class="log-filter-btn active"
+                            id="filter-success-btn"
+                        >
+                            成功
+                        </button>
+                    </div>
+                    <div class="log-stats" style="margin-top: 10px">
+                        <span
+                            >日志总数: <span id="grab-log-count">0</span></span
+                        >
+                        <span style="margin-left: 20px"
+                            >信息: <span id="info-count">0</span></span
+                        >
+                        <span style="margin-left: 20px"
+                            >调试: <span id="debug-count">0</span></span
+                        >
+                        <span style="margin-left: 20px"
+                            >警告: <span id="warn-count">0</span></span
+                        >
+                        <span style="margin-left: 20px"
+                            >错误: <span id="error-count">0</span></span
+                        >
+                    </div>
+                    <div
+                        id="grab-logs-container"
+                        class="log-container grab-log-container"
+                        style="margin-top: 16px; height: 500px"
                     ></div>
                 </div>
             </div>

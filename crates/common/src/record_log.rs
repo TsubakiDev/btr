@@ -70,7 +70,7 @@ fn write_to_log_file(message: &str) -> bool {
     false
 }
 
-//日志记录器
+// 系统日志记录器
 pub struct LogCollector {
     pub logs: Vec<String>,
 }
@@ -101,8 +101,43 @@ impl LogCollector {
     }
 }
 
+// 抢票日志记录器
+pub struct GrabLogCollector {
+    pub logs: Vec<String>,
+}
+
+impl GrabLogCollector {
+    pub fn new() -> Self {
+        Self { logs: Vec::new() }
+    }
+
+    //添加抢票日志
+    pub fn add(&mut self, message: String) {
+        self.logs.push(message);
+    }
+
+    //获取抢票日志
+    pub fn get_logs(&mut self) -> Option<Vec<String>> {
+        if self.logs.is_empty() {
+            return None;
+        }
+        let logs = self.logs.clone();
+
+        self.clear_logs();
+        Some(logs)
+    }
+
+    //清空抢票日志
+    pub fn clear_logs(&mut self) {
+        self.logs.clear();
+    }
+}
+
 pub static LOG_COLLECTOR: Lazy<Arc<Mutex<LogCollector>>> = //?
     Lazy::new(|| Arc::new(Mutex::new(LogCollector::new())));
+
+pub static GRAB_LOG_COLLECTOR: Lazy<Arc<Mutex<GrabLogCollector>>> = //?
+    Lazy::new(|| Arc::new(Mutex::new(GrabLogCollector::new())));
 
 struct CollectorLogger;
 impl log::Log for CollectorLogger {
@@ -119,6 +154,35 @@ impl log::Log for CollectorLogger {
                 if let Ok(mut collector) = LOG_COLLECTOR.try_lock() {
                     // 使用 try_lock 避免长时间等待
                     collector.add(log_message.clone());
+                }
+            }
+
+            // 检查是否为抢票相关日志
+            let args_str = record.args().to_string();
+            if args_str.contains("抢票")
+                || args_str.contains("token")
+                || args_str.contains("订单")
+                || args_str.contains("验证码")
+                || args_str.contains("倒计时")
+                || args_str.contains("项目")
+                || args_str.contains("场次")
+                || args_str.contains("购票人")
+                || args_str.contains("开始抢票")
+                || args_str.contains("获取token")
+                || args_str.contains("确认订单")
+                || args_str.contains("下单")
+                || args_str.contains("重试")
+                || args_str.contains("失败")
+                || args_str.contains("成功")
+                || args_str.contains("距离抢票时间")
+                || args_str.contains("获取购票人信息")
+                || args_str.contains("获取项目详情")
+                || args_str.contains("二维码")
+                || args_str.contains("短信")
+                || args_str.contains("登录")
+            {
+                if let Ok(mut grab_collector) = GRAB_LOG_COLLECTOR.try_lock() {
+                    grab_collector.add(log_message.clone());
                 }
             }
 

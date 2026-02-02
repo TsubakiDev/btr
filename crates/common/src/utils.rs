@@ -1,5 +1,4 @@
 use crate::account::Account;
-use crate::cookie_manager::CookieManager;
 use crate::push::PushConfig;
 use crate::utility::CustomConfig;
 use aes::Aes128;
@@ -8,12 +7,9 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
 use serde_json::{Map, Value, json};
-use std::fs::File;
+use std::fs;
 use std::io;
-use std::io::Write;
 use std::ops::{Index, IndexMut};
-use std::sync::Arc;
-use std::{fs, process};
 
 use rand::Rng;
 use reqwest::Client;

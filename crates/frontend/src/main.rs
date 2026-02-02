@@ -3,6 +3,8 @@
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use common::GRAB_LOG_COLLECTOR;
+
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use rand::{Rng, distributions::Alphanumeric, thread_rng};
 use reqwest::{Client, header};
@@ -17,6 +19,7 @@ use common::account::{Account, add_account};
 use common::captcha::LocalCaptcha;
 use common::login::LoginInput;
 use common::push::PushConfig;
+
 use common::taskmanager::{
     GetAllorderRequest, GetBuyerInfoRequest, GetTicketInfoRequest, TaskManager, TaskRequest,
     TaskStatus,
@@ -718,6 +721,61 @@ fn get_logs(state: State<'_, AppState>) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+fn get_grab_logs(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    let mut state = state
+        .inner
+        .lock()
+        .map_err(|_| "state lock failed".to_string())?;
+
+    // 从抢票日志收集器获取日志
+    if let Some(logs) = GRAB_LOG_COLLECTOR.lock().ok().and_then(
+        |mut c: std::sync::MutexGuard<'_, common::record_log::GrabLogCollector>| c.get_logs(),
+    ) {
+        for log in logs {
+            state.logs.push(log);
+        }
+    }
+
+    // 过滤出抢票相关的日志
+    let grab_logs: Vec<String> = state
+        .logs
+        .iter()
+        .filter(|log| {
+            let log_str = log.to_lowercase();
+            log_str.contains("抢票")
+                || log_str.contains("token")
+                || log_str.contains("订单")
+                || log_str.contains("验证码")
+                || log_str.contains("倒计时")
+                || log_str.contains("项目")
+                || log_str.contains("场次")
+                || log_str.contains("购票人")
+                || log_str.contains("开始抢票")
+                || log_str.contains("获取token")
+                || log_str.contains("确认订单")
+                || log_str.contains("下单")
+                || log_str.contains("重试")
+                || log_str.contains("失败")
+                || log_str.contains("成功")
+                || log_str.contains("距离抢票时间")
+                || log_str.contains("获取购票人信息")
+                || log_str.contains("获取项目详情")
+                || log_str.contains("二维码")
+                || log_str.contains("短信")
+                || log_str.contains("登录")
+        })
+        .cloned()
+        .collect();
+
+    if grab_logs.len() > 5000 {
+        let skip_count = grab_logs.len() - 5000;
+        Ok(grab_logs.into_iter().skip(skip_count).collect())
+    } else {
+        Ok(grab_logs)
+    }
+}
+
+#[tauri::command]
 fn add_log(state: State<'_, AppState>, message: String) -> Result<(), String> {
     let mut state = state
         .inner
@@ -749,6 +807,14 @@ fn get_app_info(state: State<'_, AppState>) -> Result<Value, String> {
 }
 
 #[tauri::command]
+fn clear_grab_logs() -> Result<(), String> {
+    if let Ok(mut collector) = GRAB_LOG_COLLECTOR.lock() {
+        collector.clear_logs();
+    }
+    Ok(())
+}
+
+#[tauri::command]
 fn set_ticket_id(state: State<'_, AppState>, ticket_id: String) -> Result<(), String> {
     let mut state = state
         .inner
@@ -765,6 +831,24 @@ fn set_grab_mode(state: State<'_, AppState>, mode: u8) -> Result<(), String> {
         .lock()
         .map_err(|_| "state lock failed".to_string())?;
     state.grab_mode = mode;
+    Ok(())
+}
+
+#[tauri::command]
+fn cancel_task(state: State<'_, AppState>, task_id: String) -> Result<(), String> {
+    let mut state = state
+        .inner
+        .lock()
+        .map_err(|_| "state lock failed".to_string())?;
+
+    let mut task_manager = state
+        .task_manager
+        .lock()
+        .map_err(|_| "Failed to lock task manager".to_string())?;
+
+    task_manager.cancel_task(&task_id)?;
+
+    log::info!("已取消任务: {}", task_id);
     Ok(())
 }
 
@@ -799,12 +883,7 @@ fn start_grab_ticket(state: State<'_, AppState>) -> Result<String, String> {
         .cookie_manager
         .clone()
         .ok_or_else(|| "账号未初始化，请重新添加账号".to_string())?;
-    // 创建 BilibiliTicket
-    // 根据购票人信息类型设置id_bind
-    // id_bind: 0 - 使用非绑定购票人信息 (no_bind_buyer_info)
-    // id_bind: 1 | 2 - 使用绑定购票人信息 (buyer_info)
 
-    // 根据购票人类型设置id_bind和相应的购票人信息
     let (id_bind, buyer_info, no_bind_buyer_info) = match state.buyer_type {
         0 => {
             // 非实名购票人信息
@@ -1450,7 +1529,7 @@ fn save_settings(
     }
 
     log::info!(
-        "设置已保存: grab_mode={}, delay_time={}, max_attempts={}, enable_push={}",
+        "设置已保存!",
         grab_mode,
         delay_time,
         max_attempts,
@@ -1564,8 +1643,11 @@ fn main() {
             push_test,
             get_policy,
             get_logs,
+            get_grab_logs,
             add_log,
             get_app_info,
+            clear_grab_logs,
+            cancel_task,
             set_ticket_id,
             set_grab_mode,
             set_selected_account,
