@@ -1227,32 +1227,32 @@ async function saveSettings() {
     }
 
     await invoke("save_settings", {
-      grab_mode: parseInt(grabMode),
-      delay_time: parseInt(delayTime),
-      max_attempts: parseInt(maxAttempts),
-      enable_push: enablePush,
-      bark_token: barkToken,
-      pushplus_token: pushplusToken,
-      fangtang_token: fangtangToken,
-      dingtalk_token: dingtalkToken,
-      wechat_token: wechatToken,
-      gotify_url: gotifyUrl,
-      gotify_token: gotifyToken,
-      smtp_server: smtpServer,
-      smtp_port: smtpPort,
-      smtp_username: smtpUsername,
-      smtp_password: smtpPassword,
-      smtp_from: smtpFrom,
-      smtp_to: smtpTo,
-      custom_ua: customUa,
-      user_agent: userAgent,
+      grabMode: parseInt(grabMode),
+      delayTime: parseInt(delayTime),
+      maxAttempts: parseInt(maxAttempts),
+      enablePush: enablePush,
+      barkToken: barkToken,
+      pushplusToken: pushplusToken,
+      fangtangToken: fangtangToken,
+      dingtalkToken: dingtalkToken,
+      wechatToken: wechatToken,
+      gotifyUrl: gotifyUrl,
+      gotifyToken: gotifyToken,
+      smtpServer: smtpServer,
+      smtpPort: smtpPort,
+      smtpUsername: smtpUsername,
+      smtpPassword: smtpPassword,
+      smtpFrom: smtpFrom,
+      smtpTo: smtpTo,
+      customUa: customUa,
+      userAgent: userAgent,
     });
 
     showSuccess("设置保存成功");
 
     await loadSettings();
   } catch (error) {
-    showError("开始抢票失败: " + error);
+    showError("设置保存失败: " + error);
   }
 }
 
@@ -1510,8 +1510,11 @@ async function testPush() {
   }
 
   try {
-    const result = await invoke("push_test");
-    showSuccess("测试推送已发送：" + result);
+    const result = await invoke("push_test", {
+      title: "测试",
+      message: "BTR 推送测试",
+    });
+    showSuccess("测试推送已发送");
   } catch (error) {
     showError("设置失败: " + error);
   }
