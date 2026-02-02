@@ -1528,13 +1528,7 @@ fn save_settings(
         return Err(format!("保存配置失败: {}", e));
     }
 
-    log::info!(
-        "设置已保存!",
-        grab_mode,
-        delay_time,
-        max_attempts,
-        enable_push
-    );
+    log::info!("设置已保存!");
     Ok(())
 }
 
