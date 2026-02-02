@@ -1148,6 +1148,36 @@ async function loadSettings() {
       document.getElementById("wechat-token").value =
         state.push_config.wechat_token || "";
 
+      // 设置多选框状态
+      if (state.push_config.enabled_methods) {
+        document.getElementById("push-method-bark").checked =
+          state.push_config.enabled_methods.includes("bark");
+        document.getElementById("push-method-pushplus").checked =
+          state.push_config.enabled_methods.includes("pushplus");
+        document.getElementById("push-method-fangtang").checked =
+          state.push_config.enabled_methods.includes("fangtang");
+        document.getElementById("push-method-dingtalk").checked =
+          state.push_config.enabled_methods.includes("dingtalk");
+        document.getElementById("push-method-wechat").checked =
+          state.push_config.enabled_methods.includes("wechat");
+        document.getElementById("push-method-smtp").checked =
+          state.push_config.enabled_methods.includes("smtp");
+        document.getElementById("push-method-gotify").checked =
+          state.push_config.enabled_methods.includes("gotify");
+      } else {
+        // 如果没有enabled_methods，默认全选
+        document.getElementById("push-method-bark").checked = true;
+        document.getElementById("push-method-pushplus").checked = true;
+        document.getElementById("push-method-fangtang").checked = true;
+        document.getElementById("push-method-dingtalk").checked = true;
+        document.getElementById("push-method-wechat").checked = true;
+        document.getElementById("push-method-smtp").checked = true;
+        document.getElementById("push-method-gotify").checked = true;
+      }
+
+      // 更新推送设置的可见性
+      updatePushSettingsVisibility();
+
       if (state.push_config.gotify_config) {
         document.getElementById("gotify-url").value =
           state.push_config.gotify_config.gotify_url || "";
@@ -1201,6 +1231,34 @@ async function saveSettings() {
     const customUa = document.getElementById("custom-ua").checked;
     const userAgent = document.getElementById("user-agent").value;
 
+    const enabledMethods = [];
+    if (document.getElementById("push-method-bark").checked) {
+      enabledMethods.push("bark");
+    }
+    if (document.getElementById("push-method-pushplus").checked) {
+      enabledMethods.push("pushplus");
+    }
+    if (document.getElementById("push-method-fangtang").checked) {
+      enabledMethods.push("fangtang");
+    }
+    if (document.getElementById("push-method-dingtalk").checked) {
+      enabledMethods.push("dingtalk");
+    }
+    if (document.getElementById("push-method-wechat").checked) {
+      enabledMethods.push("wechat");
+    }
+    if (document.getElementById("push-method-smtp").checked) {
+      enabledMethods.push("smtp");
+    }
+    if (document.getElementById("push-method-gotify").checked) {
+      enabledMethods.push("gotify");
+    }
+
+    if (enablePush && enabledMethods.length === 0) {
+      showError("启用推送时，必须至少选择一个推送渠道");
+      return;
+    }
+
     if (delayTime < 1 || delayTime > 10) {
       showError("延迟时间必须在1-10秒之间");
       return;
@@ -1227,32 +1285,32 @@ async function saveSettings() {
     }
 
     await invoke("save_settings", {
-      grab_mode: parseInt(grabMode),
-      delay_time: parseInt(delayTime),
-      max_attempts: parseInt(maxAttempts),
-      enable_push: enablePush,
-      bark_token: barkToken,
-      pushplus_token: pushplusToken,
-      fangtang_token: fangtangToken,
-      dingtalk_token: dingtalkToken,
-      wechat_token: wechatToken,
-      gotify_url: gotifyUrl,
-      gotify_token: gotifyToken,
-      smtp_server: smtpServer,
-      smtp_port: smtpPort,
-      smtp_username: smtpUsername,
-      smtp_password: smtpPassword,
-      smtp_from: smtpFrom,
-      smtp_to: smtpTo,
-      custom_ua: customUa,
-      user_agent: userAgent,
+      grabMode: parseInt(grabMode),
+      delayTime: parseInt(delayTime),
+      maxAttempts: parseInt(maxAttempts),
+      enablePush: enablePush,
+      enabledMethods: enabledMethods,
+      barkToken: barkToken,
+      pushplusToken: pushplusToken,
+      fangtangToken: fangtangToken,
+      dingtalkToken: dingtalkToken,
+      wechatToken: wechatToken,
+      gotifyUrl: gotifyUrl,
+      gotifyToken: gotifyToken,
+      smtpServer: smtpServer,
+      smtpPort: smtpPort,
+      smtpUsername: smtpUsername,
+      smtpPassword: smtpPassword,
+      smtpFrom: smtpFrom,
+      smtpTo: smtpTo,
+      customUa: customUa,
+      userAgent: userAgent,
     });
 
     showSuccess("设置保存成功");
-
     await loadSettings();
   } catch (error) {
-    showError("开始抢票失败: " + error);
+    showError("设置保存失败: " + error);
   }
 }
 
@@ -1389,6 +1447,7 @@ async function init() {
 
     await loadAccounts();
     await loadSettings();
+    setupPushSettingsEventListeners();
 
     resetMonitorStats();
 
@@ -1675,6 +1734,43 @@ async function exportGrabLogs() {
   } catch (error) {
     showError("导出抢票日志失败: " + error);
   }
+}
+
+function updatePushSettingsVisibility() {
+  const methods = [
+    "bark",
+    "pushplus",
+    "fangtang",
+    "dingtalk",
+    "wechat",
+    "smtp",
+    "gotify",
+  ];
+  methods.forEach((method) => {
+    const checkbox = document.getElementById(`push-method-${method}`);
+    const settings = document.getElementById(`${method}-settings`);
+    if (checkbox && settings) {
+      settings.style.display = checkbox.checked ? "block" : "none";
+    }
+  });
+}
+
+function setupPushSettingsEventListeners() {
+  const methods = [
+    "bark",
+    "pushplus",
+    "fangtang",
+    "dingtalk",
+    "wechat",
+    "smtp",
+    "gotify",
+  ];
+  methods.forEach((method) => {
+    const checkbox = document.getElementById(`push-method-${method}`);
+    if (checkbox) {
+      checkbox.addEventListener("change", updatePushSettingsVisibility);
+    }
+  });
 }
 
 function toggleAutoScroll() {

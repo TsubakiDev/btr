@@ -1469,6 +1469,7 @@ fn save_settings(
     delay_time: usize,
     max_attempts: i32,
     enable_push: bool,
+    enabled_methods: Vec<String>,
     bark_token: String,
     pushplus_token: String,
     fangtang_token: String,
@@ -1498,6 +1499,7 @@ fn save_settings(
     log::info!("最大尝试次数设置: {}", max_attempts);
 
     state.push_config.enabled = enable_push;
+    state.push_config.enabled_methods = enabled_methods;
     state.push_config.bark_token = bark_token;
     state.push_config.pushplus_token = pushplus_token;
     state.push_config.fangtang_token = fangtang_token;

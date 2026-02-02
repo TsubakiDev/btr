@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PushConfig {
     pub enabled: bool,
+    pub enabled_methods: Vec<String>,
     pub bark_token: String,
     pub pushplus_token: String,
     pub fangtang_token: String,
@@ -44,6 +45,15 @@ impl PushConfig {
     pub fn new() -> Self {
         Self {
             enabled: false,
+            enabled_methods: vec![
+                "bark".to_string(),
+                "pushplus".to_string(),
+                "fangtang".to_string(),
+                "dingtalk".to_string(),
+                "wechat".to_string(),
+                "smtp".to_string(),
+                "gotify".to_string(),
+            ],
             bark_token: String::new(),
             pushplus_token: String::new(),
             fangtang_token: String::new(),
@@ -91,7 +101,8 @@ impl PushConfig {
         let mut failure_count = 0;
         let mut failures = Vec::new();
 
-        if !self.bark_token.is_empty() {
+        // 检查是否启用了Bark推送
+        if self.enabled_methods.contains(&"bark".to_string()) && !self.bark_token.is_empty() {
             let (success, msg) = self.push_bark(title, message).await;
             if success {
                 success_count += 1;
@@ -101,7 +112,9 @@ impl PushConfig {
             }
         }
 
-        if !self.pushplus_token.is_empty() {
+        // 检查是否启用了PushPlus推送
+        if self.enabled_methods.contains(&"pushplus".to_string()) && !self.pushplus_token.is_empty()
+        {
             let (success, msg) = self.push_pushplus(title, message).await;
             if success {
                 success_count += 1;
@@ -110,7 +123,10 @@ impl PushConfig {
                 failures.push(format!("PushPlus推送出错: {}", msg));
             }
         }
-        if !self.fangtang_token.is_empty() {
+
+        // 检查是否启用了方糖推送
+        if self.enabled_methods.contains(&"fangtang".to_string()) && !self.fangtang_token.is_empty()
+        {
             let (success, msg) = self.push_fangtang(title, message).await;
             if success {
                 success_count += 1;
@@ -119,7 +135,10 @@ impl PushConfig {
                 failures.push(format!("Fangtang推送出错: {}", msg));
             }
         }
-        if !self.dingtalk_token.is_empty() {
+
+        // 检查是否启用了钉钉推送
+        if self.enabled_methods.contains(&"dingtalk".to_string()) && !self.dingtalk_token.is_empty()
+        {
             let (success, msg) = self.push_dingtalk(title, message).await;
             if success {
                 success_count += 1;
@@ -128,7 +147,9 @@ impl PushConfig {
                 failures.push(format!("Dingtalk推送出错: {}", msg));
             }
         }
-        if !self.wechat_token.is_empty() {
+
+        // 检查是否启用了微信推送
+        if self.enabled_methods.contains(&"wechat".to_string()) && !self.wechat_token.is_empty() {
             let (success, msg) = self.push_wechat(title, message).await;
             if success {
                 success_count += 1;
@@ -137,7 +158,11 @@ impl PushConfig {
                 failures.push(format!("WeChat推送出错: {}", msg));
             }
         }
-        if !self.smtp_config.smtp_server.is_empty() {
+
+        // 检查是否启用了SMTP推送
+        if self.enabled_methods.contains(&"smtp".to_string())
+            && !self.smtp_config.smtp_server.is_empty()
+        {
             let (success, msg) = self.push_smtp(title, message).await;
             if success {
                 success_count += 1;
@@ -146,7 +171,11 @@ impl PushConfig {
                 failures.push(format!("SMTP推送出错: {}", msg));
             }
         }
-        if !self.gotify_config.gotify_token.is_empty() {
+
+        // 检查是否启用了Gotify推送
+        if self.enabled_methods.contains(&"gotify".to_string())
+            && !self.gotify_config.gotify_token.is_empty()
+        {
             let (success, msg) = self.push_gotify(title, message, jump_url).await;
             if success {
                 success_count += 1;
@@ -155,6 +184,7 @@ impl PushConfig {
                 failures.push(format!("Gotify推送出错: {}", msg));
             }
         }
+
         if success_count == 0 {
             return (
                 false,
@@ -166,7 +196,7 @@ impl PushConfig {
                 ),
             );
         } else {
-            return (true, format!("全部 {} 个渠道推送成功", success_count));
+            return (true, format!("{} 个渠道推送成功", success_count));
         }
     }
     pub async fn push_gotify(

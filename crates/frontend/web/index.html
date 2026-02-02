@@ -255,6 +255,124 @@
 
                         <div class="settings-item">
                             <div>
+                                <div class="settings-label">启用推送渠道</div>
+                                <div class="settings-description">
+                                    选择要启用的推送渠道（至少选择一个）
+                                </div>
+                            </div>
+                            <div
+                                class="push-methods-checkboxes"
+                                style="margin-top: 8px"
+                            >
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-bark"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px">Bark</span>
+                                </label>
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-pushplus"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px"
+                                        >PushPlus</span
+                                    >
+                                </label>
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-fangtang"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px"
+                                        >方糖推送</span
+                                    >
+                                </label>
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-dingtalk"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px">钉钉</span>
+                                </label>
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-wechat"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px"
+                                        >企业微信</span
+                                    >
+                                </label>
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-smtp"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px">邮件</span>
+                                </label>
+                                <label
+                                    style="
+                                        display: inline-flex;
+                                        align-items: center;
+                                        margin-right: 16px;
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="push-method-gotify"
+                                        checked
+                                    />
+                                    <span style="margin-left: 4px">Gotify</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item" id="bark-settings">
+                            <div>
                                 <div class="settings-label">Bark Token</div>
                                 <div class="settings-description">
                                     iOS Bark推送服务的Token
@@ -269,7 +387,7 @@
                             />
                         </div>
 
-                        <div class="settings-item">
+                        <div class="settings-item" id="pushplus-settings">
                             <div>
                                 <div class="settings-label">PushPlus Token</div>
                                 <div class="settings-description">
@@ -285,7 +403,7 @@
                             />
                         </div>
 
-                        <div class="settings-item">
+                        <div class="settings-item" id="fangtang-settings">
                             <div>
                                 <div class="settings-label">方糖推送Token</div>
                                 <div class="settings-description">
@@ -301,7 +419,7 @@
                             />
                         </div>
 
-                        <div class="settings-item">
+                        <div class="settings-item" id="dingtalk-settings">
                             <div>
                                 <div class="settings-label">
                                     钉钉机器人Token
@@ -319,7 +437,7 @@
                             />
                         </div>
 
-                        <div class="settings-item">
+                        <div class="settings-item" id="wechat-settings">
                             <div>
                                 <div class="settings-label">企业微信Token</div>
                                 <div class="settings-description">
@@ -335,7 +453,7 @@
                             />
                         </div>
 
-                        <div class="settings-subgroup">
+                        <div class="settings-subgroup" id="gotify-settings">
                             <div class="settings-subtitle">Gotify设置</div>
                             <div class="settings-item">
                                 <div>
@@ -371,7 +489,7 @@
                             </div>
                         </div>
 
-                        <div class="settings-subgroup">
+                        <div class="settings-subgroup" id="smtp-settings">
                             <div class="settings-subtitle">SMTP邮件设置</div>
                             <div class="settings-item">
                                 <div>
