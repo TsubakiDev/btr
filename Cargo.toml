@@ -2,13 +2,14 @@
 members = [
     "crates/frontend",
     "crates/backend",
-    "crates/common"
+    "crates/common",
+    "crates/cli"
 ]
 
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "7.0.0"
 edition = "2024"
 authors = ["biliticket"]
 license = "GPLv3"
